@@ -1,0 +1,153 @@
+{
+  "experiments": [
+    {
+      "label": "ベースライン (FPS+poly)",
+      "A×B": {
+        "recall_at_1": 0.776,
+        "recall_at_5": 0.924,
+        "recall_at_10": 0.958,
+        "mrr": 0.8435623719768746
+      },
+      "A×C": {
+        "recall_at_1": 0.978,
+        "recall_at_5": 0.994,
+        "recall_at_10": 0.998,
+        "mrr": 0.9852785714285714
+      },
+      "B×C": {
+        "recall_at_1": 0.144,
+        "recall_at_5": 0.376,
+        "recall_at_10": 0.528,
+        "mrr": 0.26573802481198805
+      }
+    },
+    {
+      "label": "z-score正規化",
+      "A×B": {
+        "recall_at_1": 0.762,
+        "recall_at_5": 0.932,
+        "recall_at_10": 0.962,
+        "mrr": 0.8380724656950128
+      },
+      "A×C": {
+        "recall_at_1": 0.98,
+        "recall_at_5": 0.994,
+        "recall_at_10": 0.998,
+        "mrr": 0.9860318181818182
+      },
+      "B×C": {
+        "recall_at_1": 0.64,
+        "recall_at_5": 0.848,
+        "recall_at_10": 0.896,
+        "mrr": 0.7314392967528489
+      }
+    },
+    {
+      "label": "ランク変換",
+      "A×B": {
+        "recall_at_1": 0.672,
+        "recall_at_5": 0.89,
+        "recall_at_10": 0.932,
+        "mrr": 0.7677542684467795
+      },
+      "A×C": {
+        "recall_at_1": 0.976,
+        "recall_at_5": 0.992,
+        "recall_at_10": 0.994,
+        "mrr": 0.9826683375104428
+      },
+      "B×C": {
+        "recall_at_1": 0.52,
+        "recall_at_5": 0.75,
+        "recall_at_10": 0.834,
+        "mrr": 0.629093494096352
+      }
+    },
+    {
+      "label": "Top-kマスク (k=50)",
+      "A×B": {
+        "recall_at_1": 0.54,
+        "recall_at_5": 0.806,
+        "recall_at_10": 0.898,
+        "mrr": 0.6571704178940239
+      },
+      "A×C": {
+        "recall_at_1": 0.83,
+        "recall_at_5": 0.974,
+        "recall_at_10": 0.99,
+        "mrr": 0.8929854188300104
+      },
+      "B×C": {
+        "recall_at_1": 0.502,
+        "recall_at_5": 0.778,
+        "recall_at_10": 0.852,
+        "mrr": 0.6298661392243466
+      }
+    },
+    {
+      "label": "温度softmax (T=0.05)",
+      "A×B": {
+        "recall_at_1": 0.28,
+        "recall_at_5": 0.63,
+        "recall_at_10": 0.758,
+        "mrr": 0.43731219808506056
+      },
+      "A×C": {
+        "recall_at_1": 0.354,
+        "recall_at_5": 0.738,
+        "recall_at_10": 0.878,
+        "mrr": 0.5216069447366493
+      },
+      "B×C": {
+        "recall_at_1": 0.352,
+        "recall_at_5": 0.666,
+        "recall_at_10": 0.822,
+        "mrr": 0.49907984035799347
+      }
+    },
+    {
+      "label": "温度softmax (T=0.1)",
+      "A×B": {
+        "recall_at_1": 0.346,
+        "recall_at_5": 0.736,
+        "recall_at_10": 0.86,
+        "mrr": 0.5149649748717574
+      },
+      "A×C": {
+        "recall_at_1": 0.448,
+        "recall_at_5": 0.846,
+        "recall_at_10": 0.95,
+        "mrr": 0.6127473130083424
+      },
+      "B×C": {
+        "recall_at_1": 0.502,
+        "recall_at_5": 0.802,
+        "recall_at_10": 0.866,
+        "mrr": 0.6307810203309075
+      }
+    },
+    {
+      "label": "温度softmax (T=0.2)",
+      "A×B": {
+        "recall_at_1": 0.504,
+        "recall_at_5": 0.878,
+        "recall_at_10": 0.946,
+        "mrr": 0.6603932704655954
+      },
+      "A×C": {
+        "recall_at_1": 0.69,
+        "recall_at_5": 0.96,
+        "recall_at_10": 0.988,
+        "mrr": 0.8025110385875032
+      },
+      "B×C": {
+        "recall_at_1": 0.402,
+        "recall_at_5": 0.656,
+        "recall_at_10": 0.744,
+        "mrr": 0.5155246451544258
+      }
+    }
+  ],
+  "best_method": "z-score正規化",
+  "elapsed_seconds": 32.26104521751404
+}

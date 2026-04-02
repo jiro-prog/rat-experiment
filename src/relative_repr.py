@@ -66,6 +66,48 @@ def _kernel_poly(
     return (dot + coef0) ** degree
 
 
+# ========================================
+# 後処理: 類似度潰れ対策
+# ========================================
+
+def normalize_zscore(rel: np.ndarray) -> np.ndarray:
+    """各クエリの相対表現ベクトルをz-score正規化する。"""
+    mean = rel.mean(axis=1, keepdims=True)
+    std = rel.std(axis=1, keepdims=True)
+    std[std == 0] = 1.0
+    return (rel - mean) / std
+
+
+def normalize_rank(rel: np.ndarray) -> np.ndarray:
+    """類似度の絶対値を順位に変換する。分布の形に依存しない。"""
+    n, k = rel.shape
+    ranks = np.zeros_like(rel)
+    for i in range(n):
+        order = np.argsort(-rel[i])  # 降順
+        ranks[i, order] = np.arange(k, dtype=np.float64)
+    # 0〜K-1を0〜1に正規化
+    return 1.0 - ranks / (k - 1)
+
+
+def normalize_topk_mask(rel: np.ndarray, top_k: int = 50) -> np.ndarray:
+    """上位k個のアンカーのみ値を残し、それ以外を0にする。"""
+    n, k_total = rel.shape
+    masked = np.zeros_like(rel)
+    for i in range(n):
+        top_indices = np.argsort(-rel[i])[:top_k]
+        masked[i, top_indices] = rel[i, top_indices]
+    return masked
+
+
+def normalize_softmax(rel: np.ndarray, temperature: float = 0.1) -> np.ndarray:
+    """温度付きsoftmaxで差を増幅する。"""
+    scaled = rel / temperature
+    # 数値安定性のため各行の最大値を引く
+    scaled = scaled - scaled.max(axis=1, keepdims=True)
+    exp = np.exp(scaled)
+    return exp / exp.sum(axis=1, keepdims=True)
+
+
 def to_relative_subset(
     embeddings: np.ndarray,
     anchor_embeddings: np.ndarray,
