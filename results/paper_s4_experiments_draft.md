@@ -71,6 +71,6 @@ Using 500 Rosetta Stone anchor pairs from COCO Captions, we evaluate retrieval b
 
 The text encoder (MiniLM) has never been exposed to visual data; the image encoder (CLIP ViT) has never processed text. Yet the 500 Rosetta Stone anchors enable Recall@1 = 18.2% — 91× the random baseline — with zero training.
 
-The CLIP direct baseline (62.0%) uses CLIP's own text encoder paired with its image encoder in their jointly trained space, representing the ceiling achievable by a system trained on 400M image-text pairs. RAT recovers approximately 29% of this performance (18.2/62.0) using only 500 anchor pairs.
+The CLIP direct baseline (62.0%) uses CLIP's own text encoder paired with its image encoder in their jointly trained space, representing the ceiling achievable by a system trained on 400M image-text pairs. RAT achieves 29% of CLIP's retrieval accuracy (18.2/62.0) using only 500 anchor pairs and zero training.
 
 The z-score asymmetry (Text→Image: slight decrease, Image→Text: dramatic increase) is analyzed in §5.2.
