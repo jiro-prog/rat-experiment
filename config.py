@@ -16,11 +16,14 @@ NUM_QUERIES = 500
 # モデル
 MODEL_A = "sentence-transformers/all-MiniLM-L6-v2"
 MODEL_B = "intfloat/multilingual-e5-large"
+MODEL_C = "BAAI/bge-small-en-v1.5"
 
-# e5系モデルのプレフィクス
-E5_PREFIX = "passage: "
-# プレフィクスが必要なモデル（部分一致で判定）
-E5_MODEL_PATTERNS = ["e5-"]
+# モデルごとのプレフィクス設定
+MODEL_CONFIGS = {
+    "sentence-transformers/all-MiniLM-L6-v2": {"prefix": ""},
+    "intfloat/multilingual-e5-large": {"prefix": "passage: "},
+    "BAAI/bge-small-en-v1.5": {"prefix": "Represent this sentence: "},
+}
 
 # アンカースケーリング実験
 ANCHOR_COUNTS = [50, 100, 200, 500, 1000]

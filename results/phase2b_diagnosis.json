@@ -1,0 +1,138 @@
+{
+  "results": {
+    "FPS(Model A)": {
+      "A×B": {
+        "recall_at_1": 0.796,
+        "recall_at_5": 0.944,
+        "recall_at_10": 0.97,
+        "mrr": 0.862520101529958,
+        "overlap_at_10_x": 0.63,
+        "overlap_at_10_y": 0.5214
+      },
+      "A×C": {
+        "recall_at_1": 0.984,
+        "recall_at_5": 0.998,
+        "recall_at_10": 1.0,
+        "mrr": 0.9903666666666667,
+        "overlap_at_10_x": 0.63,
+        "overlap_at_10_y": 0.6048
+      },
+      "B×C": {
+        "recall_at_1": 0.152,
+        "recall_at_5": 0.412,
+        "recall_at_10": 0.568,
+        "mrr": 0.2843659408268271,
+        "overlap_at_10_x": 0.5214,
+        "overlap_at_10_y": 0.6048
+      }
+    },
+    "FPS(Model B)": {
+      "A×B": {
+        "recall_at_1": 0.74,
+        "recall_at_5": 0.938,
+        "recall_at_10": 0.966,
+        "mrr": 0.8266219095013618,
+        "overlap_at_10_x": 0.5952,
+        "overlap_at_10_y": 0.5385999999999999
+      },
+      "A×C": {
+        "recall_at_1": 0.974,
+        "recall_at_5": 0.994,
+        "recall_at_10": 0.996,
+        "mrr": 0.9832151515151516,
+        "overlap_at_10_x": 0.5952,
+        "overlap_at_10_y": 0.5862
+      },
+      "B×C": {
+        "recall_at_1": 0.12,
+        "recall_at_5": 0.36,
+        "recall_at_10": 0.542,
+        "mrr": 0.24450674535168754,
+        "overlap_at_10_x": 0.5385999999999999,
+        "overlap_at_10_y": 0.5862
+      }
+    },
+    "FPS(Model C)": {
+      "A×B": {
+        "recall_at_1": 0.726,
+        "recall_at_5": 0.926,
+        "recall_at_10": 0.96,
+        "mrr": 0.8137766136927255,
+        "overlap_at_10_x": 0.586,
+        "overlap_at_10_y": 0.5298
+      },
+      "A×C": {
+        "recall_at_1": 0.972,
+        "recall_at_5": 0.996,
+        "recall_at_10": 0.998,
+        "mrr": 0.9840432900432899,
+        "overlap_at_10_x": 0.586,
+        "overlap_at_10_y": 0.6264000000000001
+      },
+      "B×C": {
+        "recall_at_1": 0.184,
+        "recall_at_5": 0.458,
+        "recall_at_10": 0.606,
+        "mrr": 0.3138757129978527,
+        "overlap_at_10_x": 0.5298,
+        "overlap_at_10_y": 0.6264000000000001
+      }
+    },
+    "TF-IDF FPS": {
+      "A×B": {
+        "recall_at_1": 0.696,
+        "recall_at_5": 0.902,
+        "recall_at_10": 0.952,
+        "mrr": 0.7892119022225885,
+        "overlap_at_10_x": 0.5926,
+        "overlap_at_10_y": 0.5266
+      },
+      "A×C": {
+        "recall_at_1": 0.966,
+        "recall_at_5": 0.994,
+        "recall_at_10": 0.996,
+        "mrr": 0.9791151515151514,
+        "overlap_at_10_x": 0.5926,
+        "overlap_at_10_y": 0.5978000000000001
+      },
+      "B×C": {
+        "recall_at_1": 0.088,
+        "recall_at_5": 0.338,
+        "recall_at_10": 0.502,
+        "mrr": 0.21224496571739093,
+        "overlap_at_10_x": 0.5266,
+        "overlap_at_10_y": 0.5978000000000001
+      }
+    },
+    "Bootstrap FPS": {
+      "A×B": {
+        "recall_at_1": 0.71,
+        "recall_at_5": 0.91,
+        "recall_at_10": 0.952,
+        "mrr": 0.7967582575980221,
+        "overlap_at_10_x": 0.554,
+        "overlap_at_10_y": 0.5144
+      },
+      "A×C": {
+        "recall_at_1": 0.952,
+        "recall_at_5": 0.984,
+        "recall_at_10": 0.986,
+        "mrr": 0.9676112953098859,
+        "overlap_at_10_x": 0.554,
+        "overlap_at_10_y": 0.581
+      },
+      "B×C": {
+        "recall_at_1": 0.092,
+        "recall_at_5": 0.268,
+        "recall_at_10": 0.434,
+        "mrr": 0.19471438721746043,
+        "overlap_at_10_x": 0.5144,
+        "overlap_at_10_y": 0.581
+      }
+    }
+  },
+  "best_method": "FPS(Model C)",
+  "best_min_recall_at_1": 0.184,
+  "all_pairs_pass_60": false,
+  "elapsed_seconds": 33.0353627204895
+}

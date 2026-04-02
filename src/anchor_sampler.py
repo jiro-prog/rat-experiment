@@ -185,6 +185,106 @@ def select_anchors_consensus(
     return selected, selected_texts
 
 
+def select_anchors_tfidf_fps(
+    candidates: list[str],
+    k: int,
+    seed: int = config.RANDOM_SEED,
+) -> tuple[list[int], list[str]]:
+    """
+    TF-IDFベクトル上でFPSを実行する。
+    モデルに依存しない純粋なテキスト多様性でアンカーを選ぶ。
+    """
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.preprocessing import normalize
+
+    vectorizer = TfidfVectorizer(max_features=5000)
+    tfidf_matrix = vectorizer.fit_transform(candidates)  # sparse (N, vocab)
+    tfidf_dense = normalize(tfidf_matrix, norm="l2").toarray()  # (N, vocab) L2正規化
+
+    # 通常のFPSと同じロジック
+    rng = np.random.RandomState(seed)
+    n = len(candidates)
+    first = rng.randint(n)
+    selected = [first]
+
+    min_sim = tfidf_dense @ tfidf_dense[first]
+
+    for _ in range(k - 1):
+        min_sim_copy = min_sim.copy()
+        for idx in selected:
+            min_sim_copy[idx] = np.inf
+        next_idx = np.argmin(min_sim_copy)
+        selected.append(next_idx)
+        new_sim = tfidf_dense @ tfidf_dense[next_idx]
+        min_sim = np.maximum(min_sim, new_sim)
+
+    selected_texts = [candidates[i] for i in selected]
+    print(f"TF-IDF FPSアンカー選定: {len(selected_texts)}件")
+    return selected, selected_texts
+
+
+def select_anchors_bootstrap_fps(
+    candidate_embs: dict[str, np.ndarray],
+    candidates: list[str],
+    k: int,
+    bootstrap_k: int = 200,
+    seed: int = config.RANDOM_SEED,
+) -> tuple[list[int], list[str]]:
+    """
+    ブートストラップFPS: モデル非依存のアンカー選定。
+
+    1. ランダムアンカー(bootstrap_k個)で粗い相対表現を作る
+    2. 全モデルの相対表現を結合した空間でFPSを実行
+    3. 選定されたk個のアンカーインデックスを返す
+
+    candidate_embs: {"A": (N, D_A), "B": (N, D_B), ...} 各モデルの候補embedding
+    """
+    from src.relative_repr import to_relative
+
+    rng = random.Random(seed)
+    n = len(candidates)
+
+    # Step 1: ランダムにブートストラップアンカーを選択
+    bootstrap_indices = rng.sample(range(n), bootstrap_k)
+    print(f"  ブートストラップ: ランダム {bootstrap_k}個のアンカーで粗い相対表現を構築")
+
+    # Step 2: 全モデルの相対表現を結合
+    rel_parts = []
+    for label, emb in candidate_embs.items():
+        bootstrap_anchors = emb[bootstrap_indices]
+        rel = to_relative(emb, bootstrap_anchors, kernel="cosine")  # (N, bootstrap_k)
+        rel_parts.append(rel)
+
+    # 全モデルの相対表現を横に結合: (N, bootstrap_k * num_models)
+    combined_rel = np.hstack(rel_parts)
+    # L2正規化
+    norms = np.linalg.norm(combined_rel, axis=1, keepdims=True)
+    norms[norms == 0] = 1.0
+    combined_rel = combined_rel / norms
+
+    print(f"  結合相対表現: {combined_rel.shape} ({len(candidate_embs)}モデル × {bootstrap_k})")
+
+    # Step 3: 結合相対表現空間でFPS
+    np_rng = np.random.RandomState(seed)
+    first = np_rng.randint(n)
+    selected = [first]
+
+    min_sim = combined_rel @ combined_rel[first]
+
+    for step in range(k - 1):
+        min_sim_copy = min_sim.copy()
+        for idx in selected:
+            min_sim_copy[idx] = np.inf
+        next_idx = np.argmin(min_sim_copy)
+        selected.append(next_idx)
+        new_sim = combined_rel @ combined_rel[next_idx]
+        min_sim = np.maximum(min_sim, new_sim)
+
+    selected_texts = [candidates[i] for i in selected]
+    print(f"ブートストラップFPSアンカー選定: {len(selected_texts)}件")
+    return selected, selected_texts
+
+
 def save_data(anchors: list[str], queries: list[str], data_dir: Path = config.DATA_DIR):
     """アンカーとクエリをJSONで保存する。"""
     data_dir.mkdir(parents=True, exist_ok=True)

@@ -5,15 +5,18 @@ from pathlib import Path
 import config
 
 
-def _needs_e5_prefix(model_name: str) -> bool:
-    """e5系モデルかどうかを判定する。"""
-    return any(p in model_name for p in config.E5_MODEL_PATTERNS)
+def _get_prefix(model_name: str) -> str:
+    """モデルに対応するプレフィクスを取得する。"""
+    if model_name in config.MODEL_CONFIGS:
+        return config.MODEL_CONFIGS[model_name]["prefix"]
+    return ""
 
 
 def _prepare_texts(model_name: str, texts: list[str]) -> list[str]:
     """モデルに応じてプレフィクスを付与する。"""
-    if _needs_e5_prefix(model_name):
-        return [config.E5_PREFIX + t for t in texts]
+    prefix = _get_prefix(model_name)
+    if prefix:
+        return [prefix + t for t in texts]
     return texts
 
 

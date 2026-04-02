@@ -1,0 +1,49 @@
+{
+  "protocol": "FPS (K=500) + poly kernel ((x·a+1)^2)",
+  "models": {
+    "A": "sentence-transformers/all-MiniLM-L6-v2",
+    "B": "intfloat/multilingual-e5-large",
+    "C": "BAAI/bge-small-en-v1.5"
+  },
+  "fps_anchor_space": "Model A",
+  "results": [
+    {
+      "pair": "A×B",
+      "model_x": "sentence-transformers/all-MiniLM-L6-v2",
+      "model_y": "intfloat/multilingual-e5-large",
+      "recall_at_1": 0.794,
+      "recall_at_5": 0.952,
+      "recall_at_10": 0.984,
+      "mrr": 0.8642164782714704,
+      "median_rank": 1,
+      "overlap_at_10_x": 0.6337999999999999,
+      "overlap_at_10_y": 0.5262
+    },
+    {
+      "pair": "A×C",
+      "model_x": "sentence-transformers/all-MiniLM-L6-v2",
+      "model_y": "BAAI/bge-small-en-v1.5",
+      "recall_at_1": 0.984,
+      "recall_at_5": 0.996,
+      "recall_at_10": 0.996,
+      "mrr": 0.98952,
+      "median_rank": 1,
+      "overlap_at_10_x": 0.6337999999999999,
+      "overlap_at_10_y": 0.6068
+    },
+    {
+      "pair": "B×C",
+      "model_x": "intfloat/multilingual-e5-large",
+      "model_y": "BAAI/bge-small-en-v1.5",
+      "recall_at_1": 0.212,
+      "recall_at_5": 0.416,
+      "recall_at_10": 0.522,
+      "mrr": 0.31233295829669133,
+      "median_rank": 9,
+      "overlap_at_10_x": 0.5262,
+      "overlap_at_10_y": 0.6068
+    }
+  ],
+  "all_pairs_pass_60": false,
+  "elapsed_seconds": 45.212151288986206
+}
