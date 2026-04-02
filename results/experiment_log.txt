@@ -1,0 +1,26 @@
+実行日時: 2026-04-02 21:54:11
+Model A: sentence-transformers/all-MiniLM-L6-v2
+Model B: intfloat/multilingual-e5-large
+アンカー数: 1000
+クエリ数: 500
+シード: 42
+実行時間: 27.1秒
+
+--- Cross-Model A→B (K=1000) ---
+  recall_at_1: 0.434
+  recall_at_5: 0.736
+  recall_at_10: 0.812
+  mrr: 0.5648154363711995
+  median_rank: 2
+
+--- 近傍構造保存率 Model A (K=1000) ---
+  overlap_at_10: 0.6272000000000001
+  overlap_at_10_std: 0.1556282750659404
+  overlap_at_10_min: 0.1
+  overlap_at_10_median: 0.6
+
+--- 近傍構造保存率 Model B (K=1000) ---
+  overlap_at_10: 0.5082
+  overlap_at_10_std: 0.18240822349883243
+  overlap_at_10_min: 0.1
+  overlap_at_10_median: 0.5

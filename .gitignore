@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+
+# Data (generated at runtime)
+data/*.npy
+data/*.json
+
+# OS
+.DS_Store
+*.Zone.Identifier
+Thumbs.db
