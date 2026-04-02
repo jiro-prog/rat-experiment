@@ -1,0 +1,105 @@
+{
+  "token_stats": {
+    "max_tokens": 54,
+    "mean_tokens": 14.8884,
+    "median_tokens": 12,
+    "over_77": 0,
+    "over_77_pct": 0.0,
+    "total": 2500
+  },
+  "anchor_sim_stats_D": {
+    "label": "D",
+    "mean_sim": 0.598129153251648,
+    "std_sim": 0.1316487342119217,
+    "min_sim": 0.05112171173095703,
+    "max_sim": 0.9700233936309814,
+    "entropy": 2.6000669095053945
+  },
+  "results": [
+    {
+      "method": "baseline",
+      "pair": "A×D",
+      "recall_at_1": 0.12,
+      "recall_at_5": 0.302,
+      "recall_at_10": 0.386,
+      "mrr": 0.21263649745290777,
+      "median_rank": 23
+    },
+    {
+      "method": "baseline",
+      "pair": "B×D",
+      "recall_at_1": 0.018,
+      "recall_at_5": 0.042,
+      "recall_at_10": 0.094,
+      "mrr": 0.045870718385534456,
+      "median_rank": 123
+    },
+    {
+      "method": "baseline",
+      "pair": "C×D",
+      "recall_at_1": 0.076,
+      "recall_at_5": 0.218,
+      "recall_at_10": 0.284,
+      "mrr": 0.1504646228782205,
+      "median_rank": 40
+    },
+    {
+      "method": "zscore",
+      "pair": "A×D",
+      "recall_at_1": 0.24,
+      "recall_at_5": 0.474,
+      "recall_at_10": 0.59,
+      "mrr": 0.3567441148163197,
+      "median_rank": 6
+    },
+    {
+      "method": "zscore",
+      "pair": "B×D",
+      "recall_at_1": 0.078,
+      "recall_at_5": 0.236,
+      "recall_at_10": 0.334,
+      "mrr": 0.16226841901193353,
+      "median_rank": 23
+    },
+    {
+      "method": "zscore",
+      "pair": "C×D",
+      "recall_at_1": 0.32,
+      "recall_at_5": 0.56,
+      "recall_at_10": 0.664,
+      "mrr": 0.44122904615085173,
+      "median_rank": 4
+    },
+    {
+      "method": "zscore_reference",
+      "pair": "A×B",
+      "recall_at_1": 0.756,
+      "recall_at_5": 0.942,
+      "recall_at_10": 0.972,
+      "mrr": 0.8407372743315921,
+      "median_rank": 1
+    },
+    {
+      "method": "zscore_reference",
+      "pair": "A×C",
+      "recall_at_1": 0.982,
+      "recall_at_5": 0.998,
+      "recall_at_10": 0.998,
+      "mrr": 0.9897407407407408,
+      "median_rank": 1
+    },
+    {
+      "method": "zscore_reference",
+      "pair": "B×C",
+      "recall_at_1": 0.764,
+      "recall_at_5": 0.932,
+      "recall_at_10": 0.978,
+      "mrr": 0.8415887556887557,
+      "median_rank": 1
+    }
+  ],
+  "best_pair": "C×D",
+  "best_recall_at_1": 0.32,
+  "pass_30pct": true,
+  "elapsed_seconds": 124.75614953041077
+}

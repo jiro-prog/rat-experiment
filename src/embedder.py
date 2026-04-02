@@ -1,6 +1,9 @@
 import numpy as np
+import torch
 from sentence_transformers import SentenceTransformer
+from transformers import CLIPModel, CLIPProcessor
 from pathlib import Path
+from PIL import Image
 
 import config
 
@@ -31,6 +34,34 @@ def embed_texts(model_name: str, texts: list[str]) -> np.ndarray:
         batch_size=64,
     )
     return embeddings
+
+
+def embed_images_clip(
+    images: list[Image.Image],
+    model_name: str = "openai/clip-vit-base-patch32",
+    batch_size: int = 64,
+) -> np.ndarray:
+    """CLIPの画像エンコーダで画像をembeddingに変換する。L2正規化済み。"""
+    model = CLIPModel.from_pretrained(model_name)
+    processor = CLIPProcessor.from_pretrained(model_name)
+    model.eval()
+
+    all_embs = []
+    for i in range(0, len(images), batch_size):
+        batch = images[i : i + batch_size]
+        inputs = processor(images=batch, return_tensors="pt", padding=True)
+        with torch.no_grad():
+            vision_outputs = model.vision_model(pixel_values=inputs["pixel_values"])
+            # visual_projection で CLIP の共有空間に射影
+            pooled = vision_outputs.pooler_output
+            image_features = model.visual_projection(pooled)
+        # L2正規化
+        embs = image_features / image_features.norm(dim=-1, keepdim=True)
+        all_embs.append(embs.cpu().numpy())
+        print(f"  画像embed: {min(i + batch_size, len(images))}/{len(images)}", end="\r")
+
+    print()
+    return np.vstack(all_embs)
 
 
 def embed_and_save(

@@ -17,12 +17,14 @@ NUM_QUERIES = 500
 MODEL_A = "sentence-transformers/all-MiniLM-L6-v2"
 MODEL_B = "intfloat/multilingual-e5-large"
 MODEL_C = "BAAI/bge-small-en-v1.5"
+MODEL_D = "sentence-transformers/clip-ViT-B-32"
 
 # モデルごとのプレフィクス設定
 MODEL_CONFIGS = {
     "sentence-transformers/all-MiniLM-L6-v2": {"prefix": ""},
     "intfloat/multilingual-e5-large": {"prefix": "passage: "},
     "BAAI/bge-small-en-v1.5": {"prefix": "Represent this sentence: "},
+    "sentence-transformers/clip-ViT-B-32": {"prefix": ""},
 }
 
 # アンカースケーリング実験

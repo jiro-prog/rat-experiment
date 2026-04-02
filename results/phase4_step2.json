@@ -1,0 +1,68 @@
+{
+  "anchor_sim_stats": {
+    "text": {
+      "label": "MiniLM (text anchors)",
+      "mean_sim": 0.09156982600688934,
+      "std_sim": 0.11657457053661346,
+      "min_sim": -0.30755388736724854,
+      "max_sim": 0.9477037191390991,
+      "entropy": 2.4209423839454973
+    },
+    "image": {
+      "label": "CLIP-image (image anchors)",
+      "mean_sim": 0.4704723060131073,
+      "std_sim": 0.08644025027751923,
+      "min_sim": 0.13487525284290314,
+      "max_sim": 0.9382081031799316,
+      "entropy": 2.182531327297464
+    }
+  },
+  "results": [
+    {
+      "method": "baseline",
+      "direction": "Text→Image",
+      "recall_at_1": 0.164,
+      "recall_at_5": 0.466,
+      "recall_at_10": 0.626,
+      "mrr": 0.3051846706226254,
+      "median_rank": 6
+    },
+    {
+      "method": "baseline",
+      "direction": "Image→Text",
+      "recall_at_1": 0.038,
+      "recall_at_5": 0.156,
+      "recall_at_10": 0.238,
+      "mrr": 0.1101399717944474,
+      "median_rank": 31
+    },
+    {
+      "method": "zscore",
+      "direction": "Text→Image",
+      "recall_at_1": 0.156,
+      "recall_at_5": 0.442,
+      "recall_at_10": 0.604,
+      "mrr": 0.2973943789681541,
+      "median_rank": 7
+    },
+    {
+      "method": "zscore",
+      "direction": "Image→Text",
+      "recall_at_1": 0.182,
+      "recall_at_5": 0.484,
+      "recall_at_10": 0.646,
+      "mrr": 0.32531773329656105,
+      "median_rank": 6
+    }
+  ],
+  "clip_direct_baseline": {
+    "recall_at_1": 0.62,
+    "recall_at_5": 0.878,
+    "recall_at_10": 0.95,
+    "mrr": 0.734151412353158
+  },
+  "best_direction": "Image→Text",
+  "best_recall_at_1": 0.182,
+  "pass_10pct": true,
+  "elapsed_seconds": 124.26631212234497
+}
