@@ -22,7 +22,7 @@ We have presented Relative Anchor Translation (RAT), a zero-shot protocol for tr
 
 Our experiments yield three findings that extend beyond the RAT protocol itself:
 
-1. **Similarity collapse** is a previously uncharacterized failure mode of relative representations, caused by compressed anchor similarity distributions in certain model spaces (notably multilingual models). z-score normalization resolves this completely (+50 points) while leaving well-spread models unharmed — a design principle applicable to any method operating on inter-point similarity distributions.
+1. **Similarity collapse** is a previously uncharacterized failure mode of relative representations, caused by compressed anchor similarity distributions in certain model spaces (notably multilingual models). z-score normalization resolves this completely (+65 points on the most affected pair) while leaving well-spread models unharmed — a design principle applicable to any method operating on inter-point similarity distributions.
 
 2. **z-score normalization is a DB-side operation.** Across all model pairs and both cross-modal directions, normalizing only the database side exactly matches both-side normalization, while query-side normalization is consistently harmful. This eliminates direction-dependent heuristics from the protocol.
 

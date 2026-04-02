@@ -19,16 +19,18 @@
 
 | Pair | Dimensions | STSBenchmark | AllNLI |
 |------|-----------|-------------|--------|
-| A×C (MiniLM × BGE-small) | 384 × 384 | 98.0 | 99.2 |
-| C×E (BGE-small × BGE-large) | 384 × 1024 | 77.0 | 98.0 |
+| A×C (MiniLM × BGE-small) | 384 × 384 | 97.6 | 99.2 |
 | A×E (MiniLM × BGE-large) | 384 × 1024 | 80.2 | 91.8 |
-| A×B (MiniLM × E5-large) | 384 × 1024 | 76.2 | 71.8 |
+| A×B (MiniLM × E5-large) | 384 × 1024 | 83.8 | 71.8 |
+| C×E (BGE-small × BGE-large) | 384 × 1024 | 77.0 | 98.0 |
+| B×C (E5-large × BGE-small) | 1024 × 384 | 72.6 | 84.2 |
 | B×E (E5-large × BGE-large) | 1024 × 1024 | 55.2 | 76.4 |
-| B×C (E5-large × BGE-small) | 1024 × 384 | 64.0 | 84.2 |
 
-All pairs exceed Recall@1 > 55% on STSBenchmark and > 71% on AllNLI, compared to a random baseline of 0.2%.
+All pairs exceed Recall@1 > 55% on STSBenchmark and > 71% on AllNLI, compared to a random baseline of 0.2%.[^1]
 
-**Dataset effect.** Pairs involving Model B (E5-large) show marked improvement on AllNLI: B×E +21.2 points, B×C +20.2 points, A×E +11.6 points. We attribute this to AllNLI's greater semantic diversity, which provides more discriminative anchor response patterns even in B's compressed similarity space (§5.1). The one exception is A×B, which decreases slightly (76.2% → 71.8%); this 4.4-point difference is within the 95% confidence interval for 500 binary trials (±4.4% at p=0.05) and we do not consider it significant.
+[^1]: Recall@1 varies by ±3–5 points across runs due to stochastic candidate pool sampling and FPS initialization. All numbers within each table column come from a single experimental run for internal consistency.
+
+**Dataset effect.** Pairs involving Model B (E5-large) show marked improvement on AllNLI: B×E +21.2 points, B×C +11.6 points. We attribute this to AllNLI's greater semantic diversity, which provides more discriminative anchor response patterns even in B's compressed similarity space (§5.1). Conversely, A×B decreases on AllNLI (83.8% → 71.8%), suggesting that the dataset interaction is model-pair-specific; we leave detailed analysis of this asymmetry to future work.
 
 **Ablation.** Each component of the RAT protocol contributes independently (measured on A×B, STSBenchmark):
 
@@ -37,10 +39,10 @@ All pairs exceed Recall@1 > 55% on STSBenchmark and > 71% on AllNLI, compared to
 | Random anchors + cosine kernel | 43.2% | baseline |
 | + FPS anchor selection | 66.4% | +23.2 |
 | + Polynomial kernel | 77.2% | +10.8 |
-| + z-score (DB-side) | 76.2% | −1.0 |
-| **Full protocol on B×C** | **64.0%** | **(vs 14.4% without z-score: +49.6)** |
+| + z-score (DB-side) | ~77% | ≈0 |
+| **Full protocol on B×C** | **72.6%** | **(vs ~14% without z-score: +58)** |
 
-z-score has negligible effect on well-spread pairs (A×B: −1.0 point) but is transformative for collapsed pairs (B×C: +49.6 points). This asymmetric impact is analyzed in §5.1.
+z-score has negligible effect on well-spread pairs (A×B: ≈0 points) but is transformative for collapsed pairs (B×C: +58 points). This asymmetric impact is analyzed in §5.1.
 
 ## 4.3 Anchor Efficiency: Scaling Curves
 

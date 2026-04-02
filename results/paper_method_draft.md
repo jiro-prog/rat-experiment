@@ -8,7 +8,7 @@ $$r_X(x) = \left[ \kappa(f_X(x), f_X(a_1)), \dots, \kappa(f_X(x), f_X(a_K)) \rig
 
 where $\kappa$ is a kernel function measuring similarity between embeddings. This transforms vectors from model-specific $d_X$-dimensional spaces into a shared $K$-dimensional space, where $K$ is independent of the original dimensions.
 
-**Kernel choice.** We use the polynomial kernel $\kappa(u, v) = (u^\top v + 1)^2$, which outperforms cosine similarity ($\kappa = u^\top v$) by +15 percentage points on Recall@1 (Table A1 in Appendix). The quadratic nonlinearity amplifies differences among the highest-similarity anchors, improving discrimination at the top of the ranked list where retrieval precision matters most.
+**Kernel choice.** We use the polynomial kernel $\kappa(u, v) = (u^\top v + 1)^2$, which outperforms cosine similarity ($\kappa = u^\top v$) by +11 percentage points on Recall@1 (Table A1 in Appendix). The quadratic nonlinearity amplifies differences among the highest-similarity anchors, improving discrimination at the top of the ranked list where retrieval precision matters most.
 
 ## 2.2 Anchor Selection via Farthest Point Sampling
 
@@ -59,7 +59,7 @@ The query representation $r_X(x)$ is left unnormalized.
 
 The text-only formulation requires anchors $\mathcal{A}$ that both models can encode. For cross-modal retrieval between a text encoder $f_T$ and an image encoder $f_I$, we introduce **Rosetta Stone anchors**: a set of $K$ concept-aligned pairs $\{(t_k, i_k)\}_{k=1}^K$ where $t_k$ is a text caption and $i_k$ is the corresponding image.
 
-Each model encodes its own modality:
+Each model encodes its own modality (Figure 1b):
 
 $$r_T(x) = \left[\kappa(f_T(x), f_T(t_1)), \dots, \kappa(f_T(x), f_T(t_K))\right]$$
 $$r_I(v) = \left[\kappa(f_I(v), f_I(i_1)), \dots, \kappa(f_I(v), f_I(i_K))\right]$$

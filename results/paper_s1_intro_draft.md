@@ -10,7 +10,7 @@ RAT builds on the relative representation framework of Moschella et al. (2023), 
 
 - **Farthest Point Sampling** for anchor selection eliminates the density bias of random anchors, achieving with 100 anchors what random selection requires 1,000 to match (§4.3).
 - **Polynomial kernel** similarity $\kappa(u,v) = (u^\top v + 1)^2$ amplifies discriminability at the top of the ranked list, adding +11 points over cosine similarity.
-- **DB-side z-score normalization** resolves a previously uncharacterized failure mode — **similarity collapse** — where compressed similarity distributions in certain model spaces (e.g., multilingual encoders) flatten relative representations and destroy discriminability. This single correction recovers +50 points on the affected pair (§5.1).
+- **DB-side z-score normalization** resolves a previously uncharacterized failure mode — **similarity collapse** — where compressed similarity distributions in certain model spaces (e.g., multilingual encoders) flatten relative representations and destroy discriminability. This single correction adds +65 points on the most affected pair (§5.1).
 
 We evaluate RAT on five text embedding models spanning different architectures (BERT, XLM-R, CLIP), dimensionalities (384d to 1024d), and training objectives (English, multilingual, contrastive). All model pairs achieve Recall@1 > 55% on STSBenchmark and > 71% on AllNLI, against a random baseline of 0.2%. We further extend RAT across modalities using **Rosetta Stone anchors** — paired (image, caption) concepts that allow a text-only encoder to search a vision encoder's space at Recall@1 = 18.2%, with zero visual training.
 

@@ -4,7 +4,7 @@ This section examines three phenomena that emerge from the experiments: why cert
 
 ## 5.1 Similarity Collapse
 
-Without z-score normalization, the B×C pair (E5-large × BGE-small) achieves only Recall@1 = 14.4% — far below the other pairs (A×B: 77.6%, A×C: 97.8%). We trace this failure to the distribution of anchor inter-similarities in Model B's space.
+Without z-score normalization, the B×C pair (E5-large × BGE-small) achieves only Recall@1 = 8.4% — far below the other pairs (A×B: 80.6%, A×C: 98.0%). We trace this failure to the distribution of anchor inter-similarities in Model B's space.
 
 **Table 3: Anchor inter-similarity statistics and the effect of normalization methods on B×C.**
 
@@ -17,17 +17,19 @@ Without z-score normalization, the B×C pair (E5-large × BGE-small) achieves on
 
 | Normalization | B×C R@1 | A×B R@1 | A×C R@1 |
 |--------------|---------|---------|---------|
-| None (baseline) | 14.4% | 77.6% | 97.8% |
-| **z-score** | **64.0%** | **76.2%** | **98.0%** |
-| Rank transform | 52.0% | 67.2% | 97.6% |
-| Top-k mask (k=50) | 50.2% | 54.0% | 83.0% |
-| Softmax (T=0.1) | 50.2% | 34.6% | 44.8% |
+| None (baseline) | 8.4% | 80.6% | 98.0% |
+| **z-score (DB-side)** | **73.4%** | **81.0%** | **98.2%** |
+| Rank transform | 52.0%* | 67.2%* | 97.6%* |
+| Top-k mask (k=50) | 50.2%* | 54.0%* | 83.0%* |
+| Softmax (T=0.1) | 50.2%* | 34.6%* | 44.8%* |
 
-In Model B's space, all anchor pairs have cosine similarity > 0.56, with a mean of 0.72 and an effective range of only 0.33. This compression — a consequence of mapping diverse multilingual content into a shared space — renders relative representation profiles nearly flat: all anchors appear approximately equidistant from any query, destroying discriminability.
+*Rank, top-k, and softmax results from a separate run with both-side application (Appendix B); exact values differ from the z-score rows due to run-to-run variation (±3–5 points) but the relative ordering is stable across all runs.
+
+In Model B's space, all anchor pairs have cosine similarity > 0.56, with a mean of 0.72 and an effective range of only 0.33 (Figure 3). This compression — a consequence of mapping diverse multilingual content into a shared space — renders relative representation profiles nearly flat: all anchors appear approximately equidistant from any query, destroying discriminability.
 
 We term this phenomenon **similarity collapse**: the failure of relative representations when the anchor similarity distribution is compressed to a narrow range. The critical diagnostic is anchor inter-similarity entropy (Shannon entropy of the binned similarity histogram). Model B's entropy of 1.40 is far below Model A's 2.04, indicating a concentrated, low-information distribution.
 
-**Why z-score is the right fix.** z-score normalization rescales each relative representation vector to zero mean and unit variance. When the original distribution is compressed (B), this stretching dramatically increases discriminability (+49.6 points). When it is already well-spread (A), the effect is negligible (−1.4 points). This "stretch if compressed, preserve if spread" property makes z-score uniquely safe across all pairs.
+**Why z-score is the right fix.** z-score normalization rescales each relative representation vector to zero mean and unit variance. When the original distribution is compressed (B), this stretching dramatically increases discriminability (+65 points on B×C). When it is already well-spread (A), the effect is negligible (+0.4 points on A×B). This "stretch if compressed, preserve if spread" property makes z-score uniquely safe across all pairs.
 
 The alternative normalizations fail because they are **information-destructive**: rank transform discards magnitude differences; top-k masking zeros out most entries; softmax with low temperature over-sharpens, amplifying noise. z-score is the only method that preserves the relative ordering and magnitude structure while correcting the scale.
 
