@@ -13,8 +13,7 @@
 \usepackage{microtype}
 \usepackage{xcolor}
 \usepackage{graphicx}
-\usepackage{algorithm}
-\usepackage{algorithmic}
+\usepackage{float}
 \usepackage{multirow}
 
 \title{Zero-Shot Embedding Space Translation\\via Relative Anchor Similarity Profiles}
@@ -94,38 +93,35 @@ The query representation $r_X(x)$ is left unnormalized. DB-side z-score exactly 
 
 \subsection{RAT Protocol}
 
-\begin{algorithm}[t]
-\caption{Relative Anchor Translation}
+\begin{figure}[t]
+\centering
+\small
+\fbox{\parbox{0.92\columnwidth}{%
+\textbf{Algorithm 1:} Relative Anchor Translation\\[3pt]
+\textbf{Input:} Query $x$ via model $X$; database $\{y_1,\dots,y_n\}$ via model $Y$; candidates $\mathcal{C}$\\[4pt]
+\textbf{Offline} (once per model pair):\\
+\quad 1. Encode candidates: $E_X = f_X(\mathcal{C})$\\
+\quad 2. Select $K$ anchors via FPS on $E_X$: $\mathcal{A} = \mathrm{FPS}(E_X, K)$\\
+\quad 3. Encode anchors: $A_X = f_X(\mathcal{A})$,\; $A_Y = f_Y(\mathcal{A})$\\
+\quad 4. Compute DB relative repr.: $R_Y[j,k] = (f_Y(y_j)^\top A_Y[k] + 1)^2$\\
+\quad 5. Apply z-score to $R_Y$ (row-wise) $\to \hat{R}_Y$\\[4pt]
+\textbf{Online} (per query):\\
+\quad 6. $r_X(x) = [(f_X(x)^\top A_X[k] + 1)^2]_{k=1}^K$\\
+\quad 7. Retrieve: $\hat{j} = \arg\max_j \cos(r_X(x),\, \hat{R}_Y[j])$
+}}
 \label{alg:rat}
-\begin{algorithmic}[1]
-\REQUIRE Query $x$ via model $X$; database $\{y_1,\dots,y_n\}$ via model $Y$; candidate anchors $\mathcal{C}$
-\STATE \textbf{Offline (once per model pair):}
-\STATE \quad Encode candidates: $E_X = f_X(\mathcal{C})$
-\STATE \quad Select $K$ anchors via FPS on $E_X$: $\mathcal{A} = \mathrm{FPS}(E_X, K)$
-\STATE \quad Encode anchors: $A_X = f_X(\mathcal{A})$, $A_Y = f_Y(\mathcal{A})$
-\STATE \quad Compute DB relative repr.: $R_Y[j,k] = (f_Y(y_j)^\top A_Y[k] + 1)^2$
-\STATE \quad Apply z-score to $R_Y$ (row-wise): $\hat{R}_Y$
-\STATE \textbf{Online (per query):}
-\STATE \quad $r_X(x) = [(f_X(x)^\top A_X[k] + 1)^2]_{k=1}^K$
-\STATE \quad Retrieve: $\hat{j} = \arg\max_j \cos(r_X(x),\, \hat{R}_Y[j])$
-\end{algorithmic}
-\end{algorithm}
+\end{figure}
 
 %% ============================================================
 \section{Cross-Modal Extension: Rosetta Stone Anchors}
 \label{sec:rosetta}
 %% ============================================================
 
-For cross-modal retrieval between a text encoder $f_T$ and an image encoder $f_I$, we introduce \textbf{Rosetta Stone anchors}: $K$ concept-aligned pairs $\{(t_k, i_k)\}_{k=1}^K$ where $t_k$ is a caption and $i_k$ the corresponding image (Figure~\ref{fig:pipeline}b). Each model encodes its own modality:
-\begin{align}
-  r_T(x) &= \left[\kappa(f_T(x), f_T(t_1)), \dots, \kappa(f_T(x), f_T(t_K))\right] \\
-  r_I(v) &= \left[\kappa(f_I(v), f_I(i_1)), \dots, \kappa(f_I(v), f_I(i_K))\right]
-\end{align}
-The key insight is that both representations encode the same concept's \emph{response pattern}, measured through different modalities. We use image-caption pairs from the COCO Karpathy test split \citep{lin2014microsoft,karpathy2015deep}, with FPS applied in the text encoder's space.
+For cross-modal retrieval between a text encoder $f_T$ and an image encoder $f_I$, we introduce \textbf{Rosetta Stone anchors}: $K$ concept-aligned pairs $\{(t_k, i_k)\}_{k=1}^K$ where $t_k$ is a caption and $i_k$ the corresponding image (Figure~\ref{fig:pipeline}b). Each model encodes its own modality: $r_T(x) = [\kappa(f_T(x), f_T(t_k))]_{k=1}^K$ and $r_I(v) = [\kappa(f_I(v), f_I(i_k))]_{k=1}^K$. Both representations encode the same concept's \emph{response pattern} through different modalities. We use image-caption pairs from COCO Karpathy \citep{lin2014microsoft,karpathy2015deep}, with FPS in the text space.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\textwidth]{figures/figure1_rat_pipeline.png}
+  \includegraphics[width=0.75\textwidth]{figures/figure1_rat_pipeline.png}
   \caption{\textbf{RAT pipeline.} (a)~Text$\times$Text: both models encode the same anchor texts; relative representations live in a shared $K$-dimensional space regardless of original dimensions. (b)~Cross-modal: Rosetta Stone anchors provide concept-aligned (caption, image) pairs; each model encodes its own modality.}
   \label{fig:pipeline}
 \end{figure}
@@ -170,52 +166,18 @@ Table~\ref{tab:text} shows results for all six model pairs. All pairs exceed 55\
 \subsection{Anchor Efficiency: Scaling Curves}
 \label{sec:scaling}
 
-\begin{table}[t]
-\centering
-\caption{Recall@1 (\%) vs.\ anchor count $K$ on A$\times$B (STSBenchmark).}
-\label{tab:scaling}
-\begin{tabular}{@{}rccc@{}}
-\toprule
-$K$ & Random + cosine & RAT protocol & $\Delta$ \\
-\midrule
-100  & 26.0 & \textbf{55.0} & +29.0 \\
-200  & 33.4 & \textbf{69.8} & +36.4 \\
-500  & 45.2 & \textbf{79.6} & +34.4 \\
-1000 & 48.2 & \textbf{79.6} & +31.4 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Table~\ref{tab:scaling} and Figure~\ref{fig:scaling} compare the na\"ive baseline against the full RAT protocol. \textbf{RAT at $K{=}100$ (55.0\%) surpasses random at $K{=}1000$ (48.2\%)}---proper anchor selection and kernel choice achieve higher accuracy with 10$\times$ fewer anchors. RAT saturates at $K{=}500$, identifying it as the cost-optimal operating point.
+Figure~\ref{fig:scaling} compares the na\"ive baseline (random anchors + cosine) against the full RAT protocol across $K \in \{100, 200, 500, 1000\}$ on A$\times$B. \textbf{RAT at $K{=}100$ (55.0\%) surpasses random at $K{=}1000$ (48.2\%)}---proper anchor selection and kernel choice achieve higher accuracy with 10$\times$ fewer anchors. The FPS advantage is +29 to +36 points across all $K$ values. RAT saturates at $K{=}500$ (79.6\%), identifying it as the cost-optimal operating point.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.85\textwidth]{figures/scaling_comparison.png}
-  \caption{Scaling curves for A$\times$B: Random+cosine (dashed) vs.\ RAT protocol (solid).}
+  \includegraphics[width=0.7\textwidth]{figures/scaling_comparison.png}
+  \caption{Scaling curves for A$\times$B: Random+cosine (dashed) vs.\ RAT protocol (solid). Left: Recall@1. Right: MRR. RAT at $K{=}100$ exceeds random at $K{=}1000$.}
   \label{fig:scaling}
 \end{figure}
 
 \subsection{Cross-Modal Retrieval}
 
-\begin{table}[t]
-\centering
-\caption{Cross-modal retrieval between MiniLM text and CLIP ViT-B/32 image.}
-\label{tab:crossmodal}
-\begin{tabular}{@{}llccc@{}}
-\toprule
-Direction & Method & Recall@1 & Recall@10 & MRR \\
-\midrule
-Text $\to$ Image & baseline      & \textbf{16.4} & 62.6 & 0.305 \\
-Text $\to$ Image & z-score       & 15.6 & 60.4 & 0.297 \\
-Image $\to$ Text & baseline      & 3.8  & 23.8 & 0.110 \\
-Image $\to$ Text & z-score       & \textbf{18.2} & 64.6 & 0.325 \\
-\midrule
-\emph{CLIP direct} & \emph{upper bound} & \emph{62.0} & \emph{95.0} & \emph{0.734} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Table~\ref{tab:crossmodal} shows that a text-only encoder achieves Recall@1 = 18.2\% in a vision encoder's space---91$\times$ the random baseline---using 500 Rosetta Stone anchors and zero training. RAT achieves 29\% of CLIP's retrieval accuracy (18.2/62.0), where CLIP was trained on 400M image-text pairs.
+Using 500 Rosetta Stone anchors from COCO, a text-only encoder achieves Recall@1 = 18.2\% (Image$\to$Text, with z-score) in a vision encoder's space---91$\times$ the random baseline and 29\% of CLIP's directly trained retrieval accuracy (62.0\%). Without z-score, Text$\to$Image reaches 16.4\% while Image$\to$Text drops to 3.8\%; the z-score asymmetry mirrors the text-only findings (\S\ref{sec:asymmetric}).
 
 %% ============================================================
 \section{Analysis}
@@ -250,7 +212,7 @@ z-score adds +65 points on B$\times$C while leaving well-spread models unharmed 
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.85\textwidth]{figures/analysis_sim_dist.png}
+  \includegraphics[width=0.7\textwidth]{figures/analysis_sim_dist.png}
   \caption{Anchor inter-similarity distributions. Model~B (E5-large) is compressed into a narrow high-similarity band, causing similarity collapse.}
   \label{fig:simprofile}
 \end{figure}
@@ -283,9 +245,7 @@ DB-side normalization is effective because $n$ database vectors provide stable d
 \subsection{Dimensions Don't Matter: Shared Relative Structure}
 \label{sec:dimensions}
 
-Models B (E5-large, 1024d) and E (BGE-large, 1024d) share output dimensionality but differ in architecture and training. Their direct cosine similarity on identical texts averages $-0.02$---indistinguishable from random projections. Yet RAT achieves 55.2\% on B$\times$E. Meanwhile, A$\times$B (384d $\times$ 1024d) achieves 83.8\%.
-
-\textbf{Same-dimension B$\times$E (55\%) $<$ cross-dimension A$\times$B (84\%)}: dimensional agreement is irrelevant to RAT performance. What matters is the structural compatibility of the underlying semantic spaces. RAT's Recall@1 provides a concrete operationalization of the structural convergence posited by the Platonic Representation Hypothesis \citep{huh2024platonic}: independently trained models develop partially overlapping semantic geometries visible only through relative comparison. The spectrum of RAT scores (55\%--98\%) offers a finer-grained measure than a binary ``converged or not'' framing.
+Models B (E5-large) and E (BGE-large) share 1024d output but differ in architecture (XLM-R vs BERT) and training data. Their direct cosine similarity on identical texts averages $-0.02$---yet RAT achieves 55.2\% on B$\times$E, while cross-dimension A$\times$B (384d $\times$ 1024d) reaches 83.8\%. \textbf{Same-dimension B$\times$E (55\%) $<$ cross-dimension A$\times$B (84\%)}: dimensional agreement is irrelevant. RAT's Recall@1 provides a concrete operationalization of the structural convergence posited by the Platonic Representation Hypothesis \citep{huh2024platonic}, with the spectrum (55\%--98\%) offering finer granularity than a binary ``converged or not'' framing.
 
 %% ============================================================
 \section{Related Work}
@@ -310,11 +270,7 @@ Models B (E5-large, 1024d) and E (BGE-large, 1024d) share output dimensionality 
 \label{sec:conclusion}
 %% ============================================================
 
-RAT is a zero-shot protocol for translating between embedding spaces without training. Three composable steps---FPS anchor selection, polynomial kernel similarity, and DB-side z-score normalization---enable cross-model retrieval across five encoders with Recall@1 from 55\% to 98\%.
-
-Our experiments yield three findings that extend beyond RAT: (1)~Similarity collapse is a diagnosable, fixable failure mode of relative representations, resolved by z-score normalization (+65 points) while leaving well-spread models unharmed. (2)~z-score is a DB-side operation: query-side normalization is unnecessary and harmful. (3)~Relative structure persists when absolute coordinates are uncorrelated (cos $\approx 0$, RAT 55\%), providing an operational measure of the structural convergence posited by the Platonic Representation Hypothesis.
-
-Rosetta Stone anchors extend RAT across modalities: a text-only encoder retrieves from a vision encoder's space at 18.2\% Recall@1 with zero visual training. RAT's appeal lies in simplicity: adding a new model requires only encoding shared anchors---no paired data, no gradients, no GPU.
+RAT translates between embedding spaces without training via three composable steps (FPS + polynomial kernel + DB-side z-score), achieving Recall@1 from 55\% to 98\% across five encoders. Key findings: similarity collapse is diagnosable and fixable (+65 points via z-score); z-score is purely a DB-side operation; and relative structure persists even when absolute coordinates are uncorrelated (cos $\approx 0$, RAT 55\%). Rosetta Stone anchors extend RAT across modalities (18.2\% Recall@1, zero visual training). Adding a new model requires only encoding shared anchors---no paired data, no gradients, no GPU.
 
 %% ============================================================
 % References
