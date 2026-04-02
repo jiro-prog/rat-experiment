@@ -1,0 +1,84 @@
+{
+  "experiments": [
+    {
+      "recall_at_1": 0.432,
+      "recall_at_5": 0.708,
+      "recall_at_10": 0.792,
+      "mrr": 0.5520528062443011,
+      "overlap_at_10_A": 0.6362000000000001,
+      "overlap_at_10_B": 0.5232,
+      "label": "1a",
+      "anchor": "ランダム",
+      "kernel": "cosine"
+    },
+    {
+      "recall_at_1": 0.492,
+      "recall_at_5": 0.764,
+      "recall_at_10": 0.868,
+      "mrr": 0.6139480413357175,
+      "overlap_at_10_A": 0.6426000000000001,
+      "overlap_at_10_B": 0.5296,
+      "label": "1b",
+      "anchor": "k-means",
+      "kernel": "cosine"
+    },
+    {
+      "recall_at_1": 0.664,
+      "recall_at_5": 0.898,
+      "recall_at_10": 0.956,
+      "mrr": 0.7673334811664607,
+      "overlap_at_10_A": 0.6685999999999999,
+      "overlap_at_10_B": 0.5317999999999999,
+      "label": "1c",
+      "anchor": "FPS",
+      "kernel": "cosine"
+    },
+    {
+      "recall_at_1": 0.506,
+      "recall_at_5": 0.77,
+      "recall_at_10": 0.884,
+      "mrr": 0.6250869725083551,
+      "overlap_at_10_A": 0.64,
+      "overlap_at_10_B": 0.5337999999999999,
+      "label": "1d",
+      "anchor": "両モデル合議",
+      "kernel": "cosine"
+    },
+    {
+      "recall_at_1": 0.332,
+      "recall_at_5": 0.57,
+      "recall_at_10": 0.664,
+      "mrr": 0.43998783383531803,
+      "overlap_at_10_A": 0.542,
+      "overlap_at_10_B": 0.5156000000000001,
+      "label": "2b",
+      "anchor": "ランダム",
+      "kernel": "rbf"
+    },
+    {
+      "recall_at_1": 0.582,
+      "recall_at_5": 0.82,
+      "recall_at_10": 0.88,
+      "mrr": 0.6865534179005776,
+      "overlap_at_10_A": 0.5434,
+      "overlap_at_10_B": 0.5216000000000001,
+      "label": "2c",
+      "anchor": "ランダム",
+      "kernel": "poly"
+    },
+    {
+      "recall_at_1": 0.772,
+      "recall_at_5": 0.948,
+      "recall_at_10": 0.972,
+      "mrr": 0.8495336728278108,
+      "overlap_at_10_A": 0.627,
+      "overlap_at_10_B": 0.533,
+      "label": "3",
+      "anchor": "FPS",
+      "kernel": "poly"
+    }
+  ],
+  "best_anchor": "FPS",
+  "best_kernel": "poly",
+  "elapsed_seconds": 102.82952332496643
+}
