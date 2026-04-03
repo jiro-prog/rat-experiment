@@ -1,5 +1,7 @@
 # Relative Anchor Translation (RAT)
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19401277.svg)](https://zenodo.org/records/19401277)
+
 異なるembeddingモデル間で、共通アンカーポイントとの相対距離だけを使い、**追加学習なしにzero-shot**で空間変換ができるかを検証する実験。
 
 ## RAT Protocol v0.1
