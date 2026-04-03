@@ -64,8 +64,8 @@ class TestNormalizeZscore:
 
 
 class TestRecommendZscore:
-    def test_not_needed(self):
-        assert recommend_zscore(0.14) == "not_needed"
+    def test_low_sim_mean(self):
+        assert recommend_zscore(0.14) == "recommended"
 
     def test_recommended_at_threshold(self):
         assert recommend_zscore(0.15) == "recommended"
@@ -83,6 +83,5 @@ class TestRecommendZscore:
         assert recommend_zscore(0.50, harmful_threshold=0.50) == "harmful"
         assert recommend_zscore(0.49, harmful_threshold=0.50) == "recommended"
 
-    def test_custom_threshold(self):
-        assert recommend_zscore(0.09, threshold=0.10) == "not_needed"
-        assert recommend_zscore(0.10, threshold=0.10) == "recommended"
+    def test_zero_sim_mean(self):
+        assert recommend_zscore(0.0) == "recommended"

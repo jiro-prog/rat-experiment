@@ -91,7 +91,7 @@ class TestEstimateCompatibility:
         assert "sim_mean_b" in result
         assert "max_sim_mean" in result
         assert result["estimated_recall_at_1"] is None
-        assert result["z_score_recommendation"] in ("recommended", "not_needed", "harmful")
+        assert result["z_score_recommendation"] in ("recommended", "harmful")
         assert isinstance(result["warnings"], list)
 
     def test_unregistered_raises(self, hub_3models):

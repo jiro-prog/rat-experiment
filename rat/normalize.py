@@ -54,15 +54,14 @@ def recommend_zscore(
     Parameters
     ----------
     sim_mean : mean pairwise cosine similarity of anchors
-    threshold : below this, z-score is not needed
+    threshold : kept for backward compatibility but no longer used
+        in the decision. Previously, sim_mean below this was "not_needed".
     harmful_threshold : above this, z-score is harmful
 
     Returns
     -------
-    "harmful", "recommended", or "not_needed"
+    "harmful" or "recommended"
     """
     if sim_mean >= harmful_threshold:
         return "harmful"
-    if sim_mean >= threshold:
-        return "recommended"
-    return "not_needed"
+    return "recommended"

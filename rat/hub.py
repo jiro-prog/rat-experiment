@@ -131,9 +131,9 @@ class RATHub:
         if self._normalize == "always":
             return True
 
-        # "auto": use recommendation
+        # "auto": apply z-score unless harmful
         rec = recommend_zscore(sim_mean, self._normalize_threshold, self._normalize_harmful_threshold)
-        should = rec == "recommended"
+        should = rec != "harmful"
 
         if self._verbose:
             if rec == "harmful":
@@ -142,15 +142,10 @@ class RATHub:
                     f"harmful_threshold {self._normalize_harmful_threshold} "
                     f"→ z-score: harmful (skipping)"
                 )
-            elif should:
-                print(
-                    f"[RAT] {model_name} sim_mean={sim_mean:.3f} >= "
-                    f"{self._normalize_threshold} → applying z-score"
-                )
             else:
                 print(
-                    f"[RAT] {model_name} sim_mean={sim_mean:.3f} < "
-                    f"{self._normalize_threshold} → z-score: not needed"
+                    f"[RAT] {model_name} sim_mean={sim_mean:.3f} "
+                    f"→ applying z-score"
                 )
 
         return should
