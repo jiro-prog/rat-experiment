@@ -1,5 +1,8 @@
 # RAT — Relative Anchor Translation
 
+[![PyPI](https://img.shields.io/pypi/v/rat-embed)](https://pypi.org/project/rat-embed/)
+[![Python](https://img.shields.io/pypi/pyversions/rat-embed)](https://pypi.org/project/rat-embed/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19401277.svg)](https://zenodo.org/records/19401277)
 
 Zero-shot embedding space translation using relative distances to shared anchors. No additional training required.
@@ -7,9 +10,9 @@ Zero-shot embedding space translation using relative distances to shared anchors
 ## Install
 
 ```bash
-pip install -e .            # core (numpy only)
-pip install -e ".[models]"  # + sentence-transformers for fit()
-pip install -e ".[dev]"     # + pytest, ruff
+pip install rat-embed            # core (numpy only)
+pip install "rat-embed[models]"  # + sentence-transformers for fit()
+pip install "rat-embed[dev]"     # + pytest, ruff
 ```
 
 ## Quick Start
