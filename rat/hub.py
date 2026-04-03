@@ -261,17 +261,60 @@ class RATHub:
 
     # ── Compatibility ──
 
+    # Regression coefficients (linear, N=90, CLIP excluded, R²=0.17)
+    _COMPAT_SLOPE = -45.37
+    _COMPAT_INTERCEPT = 109.87
+    _COMPAT_RESID_P16 = -11.6  # 16th percentile of residuals
+    _COMPAT_RESID_P84 = 13.9   # 84th percentile of residuals
+    _COMPAT_SAME_FAMILY_BONUS = 10.0
+
+    # Tier boundaries (max_sim_mean thresholds)
+    _TIER_HIGH_UPPER = 0.45
+    _TIER_LOW_LOWER = 0.72
+
+    _TIER_DESCRIPTIONS: dict[tuple[str, bool], str] = {
+        ("high", False): "Pairs in this compression range typically achieve Recall@1 91-98%.",
+        ("high", True): "Same-family pairs in this range typically achieve >95%.",
+        ("moderate", False): (
+            "Pairs in this range typically achieve Recall@1 73-91%, with wide variation."
+        ),
+        ("moderate", True): (
+            "Same-family pairs in this range are expected to perform at the high end."
+        ),
+        ("low", False): (
+            "High-compression pairs typically achieve Recall@1 61-82%. "
+            "Consider z-score normalization."
+        ),
+        ("low", True): (
+            "Same-family pairs partially offset compression effects, "
+            "typically achieving 80-95%."
+        ),
+    }
+
     def estimate_compatibility(
         self,
         model_a: str,
         model_b: str,
+        same_family: bool | None = None,
     ) -> dict:
-        """Estimate RAT compatibility between two registered models.
+        """Rough compatibility estimate based on anchor similarity compression.
+
+        Based on linear regression over N=90 text-model pairs (CLIP excluded),
+        R²=0.17. The compatibility tier is more reliable than the point
+        estimate. Cross-modal and CLIP-text models may deviate significantly.
+
+        Parameters
+        ----------
+        model_a, model_b : registered model names
+        same_family : whether the two models belong to the same family
+            (e.g. both BGE, both E5). If True, adds +10pt bonus to the
+            point estimate and raises the compatibility tier by one level.
+            If None (default), no adjustment is applied.
 
         Returns
         -------
-        dict with sim_mean_a, sim_mean_b, max_sim_mean, estimated_recall_at_1,
-        z_score_recommendation, warnings
+        dict with compatibility tier, point estimate, confidence band, and
+        z-score recommendation.
         """
         if model_a not in self._models:
             raise RuntimeError(f"Model '{model_a}' not registered.")
@@ -282,6 +325,26 @@ class RATHub:
         sm_b = self._models[model_b]["sim_mean"]
         max_sm = max(sm_a, sm_b)
         rec = recommend_zscore(max_sm, self._normalize_threshold, self._normalize_harmful_threshold)
+
+        # Point estimate (clipped to [0, 100])
+        est = self._COMPAT_SLOPE * max_sm + self._COMPAT_INTERCEPT
+        est = max(0.0, min(est, 100.0))
+        bonus: float | None = None
+        if same_family is True:
+            bonus = self._COMPAT_SAME_FAMILY_BONUS
+            est = min(est + bonus, 99.0)
+
+        # Confidence band (16th-84th percentile, clipped to [0, 100])
+        band_lo = max(est + self._COMPAT_RESID_P16, 0.0)
+        band_hi = min(est + self._COMPAT_RESID_P84, 100.0)
+
+        # Tier
+        tier = self._compute_tier(max_sm)
+        if same_family is True:
+            tier = self._upgrade_tier(tier)
+
+        sf_key = same_family is True
+        description = self._TIER_DESCRIPTIONS.get((tier, sf_key), "")
 
         warn_list: list[str] = []
         if max_sm > self._normalize_harmful_threshold:
@@ -294,10 +357,31 @@ class RATHub:
             "sim_mean_a": sm_a,
             "sim_mean_b": sm_b,
             "max_sim_mean": max_sm,
-            "estimated_recall_at_1": None,  # Phase 2
+            "compatibility": tier,
+            "compatibility_description": description,
+            "estimated_recall_at_1": round(est, 1),
+            "confidence_band": (round(band_lo, 1), round(band_hi, 1)),
+            "estimate_reliability": "low",
+            "same_family_bonus": bonus,
             "z_score_recommendation": rec,
             "warnings": warn_list,
         }
+
+    @staticmethod
+    def _compute_tier(max_sim_mean: float) -> str:
+        if max_sim_mean < RATHub._TIER_HIGH_UPPER:
+            return "high"
+        if max_sim_mean < RATHub._TIER_LOW_LOWER:
+            return "moderate"
+        return "low"
+
+    @staticmethod
+    def _upgrade_tier(tier: str) -> str:
+        if tier == "low":
+            return "moderate"
+        if tier == "moderate":
+            return "high"
+        return "high"  # high stays high
 
     # ── Persistence ──
 

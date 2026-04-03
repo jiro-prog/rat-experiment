@@ -166,7 +166,13 @@ class TestEstimateCompatibility:
         result = translator.estimate_compatibility()
         assert "sim_mean_a" in result
         assert "sim_mean_b" in result
-        assert result["estimated_recall_at_1"] is None
+        assert isinstance(result["estimated_recall_at_1"], float)
+        assert "compatibility" in result
+        assert result["estimate_reliability"] == "low"
+
+    def test_same_family_passthrough(self, translator):
+        result = translator.estimate_compatibility(same_family=True)
+        assert result["same_family_bonus"] == 10.0
 
 
 class TestSaveLoad:

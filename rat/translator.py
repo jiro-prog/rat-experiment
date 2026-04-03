@@ -183,10 +183,16 @@ class RATranslator:
 
     # ── Compatibility ──
 
-    def estimate_compatibility(self) -> dict:
-        """Estimate RAT compatibility between the two fitted models."""
+    def estimate_compatibility(self, same_family: bool | None = None) -> dict:
+        """Estimate RAT compatibility between the two fitted models.
+
+        Parameters
+        ----------
+        same_family : whether the two models belong to the same family.
+            See :meth:`RATHub.estimate_compatibility` for details.
+        """
         self._check_fitted()
-        return self._hub.estimate_compatibility(_MODEL_A, _MODEL_B)
+        return self._hub.estimate_compatibility(_MODEL_A, _MODEL_B, same_family=same_family)
 
     # ── Persistence ──
 

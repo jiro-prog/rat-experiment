@@ -90,13 +90,68 @@ class TestEstimateCompatibility:
         assert "sim_mean_a" in result
         assert "sim_mean_b" in result
         assert "max_sim_mean" in result
-        assert result["estimated_recall_at_1"] is None
+        assert "compatibility" in result
+        assert "compatibility_description" in result
+        assert isinstance(result["estimated_recall_at_1"], float)
+        assert isinstance(result["confidence_band"], tuple)
+        assert len(result["confidence_band"]) == 2
+        assert result["estimate_reliability"] == "low"
+        assert result["same_family_bonus"] is None
         assert result["z_score_recommendation"] in ("recommended", "harmful")
         assert isinstance(result["warnings"], list)
 
     def test_unregistered_raises(self, hub_3models):
         with pytest.raises(RuntimeError):
             hub_3models.estimate_compatibility("model_x", "nonexistent")
+
+    def test_tier_high(self, rng):
+        """max_sim_mean < 0.45 → high tier."""
+        hub = RATHub(kernel="poly")
+        # Use very low-dim embeddings that are orthogonal → low sim_mean
+        anchors_a = _make_normalized(rng, 20, 128)
+        anchors_b = _make_normalized(rng, 20, 128)
+        hub.set_anchors("a", anchors_a)
+        hub.set_anchors("b", anchors_b)
+        result = hub.estimate_compatibility("a", "b")
+        # Random 128-dim vectors have sim_mean close to 0 → should be "high"
+        assert result["compatibility"] == "high"
+
+    def test_tier_boundaries(self):
+        """Test tier computation directly."""
+        assert RATHub._compute_tier(0.44) == "high"
+        assert RATHub._compute_tier(0.45) == "moderate"
+        assert RATHub._compute_tier(0.71) == "moderate"
+        assert RATHub._compute_tier(0.72) == "low"
+
+    def test_same_family_upgrades_tier(self):
+        assert RATHub._upgrade_tier("low") == "moderate"
+        assert RATHub._upgrade_tier("moderate") == "high"
+        assert RATHub._upgrade_tier("high") == "high"
+
+    def test_same_family_bonus(self, hub_3models):
+        result_no_sf = hub_3models.estimate_compatibility("model_x", "model_y")
+        result_sf = hub_3models.estimate_compatibility("model_x", "model_y", same_family=True)
+        assert result_no_sf["same_family_bonus"] is None
+        assert result_sf["same_family_bonus"] == 10.0
+        # same_family caps at 99.0, base caps at 100.0, so sf can be <= base
+        assert result_sf["estimated_recall_at_1"] <= 99.0
+
+    def test_same_family_clipping(self, rng):
+        """same_family bonus should not exceed 99.0."""
+        hub = RATHub(kernel="poly")
+        # Low sim_mean → high base estimate → bonus could push past 99
+        anchors = _make_normalized(rng, 20, 256)
+        hub.set_anchors("a", anchors)
+        hub.set_anchors("b", _make_normalized(rng, 20, 256))
+        result = hub.estimate_compatibility("a", "b", same_family=True)
+        assert result["estimated_recall_at_1"] <= 99.0
+
+    def test_confidence_band_clipping(self, hub_3models):
+        result = hub_3models.estimate_compatibility("model_x", "model_y")
+        lo, hi = result["confidence_band"]
+        assert lo >= 0.0
+        assert hi <= 100.0
+        assert lo <= result["estimated_recall_at_1"] <= hi
 
 
 class TestRetrieveMulti:
