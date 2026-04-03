@@ -1,0 +1,136 @@
+{
+  "experiment": "C2b: Multi-Model RAG",
+  "date": "2026-04-04",
+  "config": {
+    "K": 500,
+    "kernel": "poly(degree=2, coef0=1.0)",
+    "query_model": "E",
+    "db_models": [
+      "E",
+      "A",
+      "H"
+    ],
+    "db_splits": [
+      [
+        0,
+        167
+      ],
+      [
+        167,
+        334
+      ],
+      [
+        334,
+        500
+      ]
+    ],
+    "n_queries": 500,
+    "anchor_selection": "shared (FPS on query model candidates)",
+    "rrf_k": 60,
+    "top_k_per_db": 50,
+    "zscore": "auto (v0.1.1)",
+    "gt": "identity (query[i] matches db[i], same text)"
+  },
+  "test_a_per_db_pairwise": [
+    {
+      "db": "DB1(BGE-large)",
+      "model": "E",
+      "n": 167,
+      "r1": 100.0,
+      "r5": 100.0,
+      "r10": 100.0,
+      "mrr": 100.0
+    },
+    {
+      "db": "DB2(MiniLM)",
+      "model": "A",
+      "n": 167,
+      "r1": 88.0,
+      "r5": 97.6,
+      "r10": 99.4,
+      "mrr": 92.7
+    },
+    {
+      "db": "DB3(GTE-small)",
+      "model": "H",
+      "n": 166,
+      "r1": 92.8,
+      "r5": 100.0,
+      "r10": 100.0,
+      "mrr": 96.0
+    }
+  ],
+  "test_b1_vstack": {
+    "r1": 30.8,
+    "r5": 33.2,
+    "r10": 33.2,
+    "mrr": 32.2,
+    "score_stats": [
+      {
+        "db": "DB1(BGE-large)",
+        "mean": 0.0631,
+        "std": 0.0118
+      },
+      {
+        "db": "DB2(MiniLM)",
+        "mean": 0.0277,
+        "std": 0.0073
+      },
+      {
+        "db": "DB3(GTE-small)",
+        "mean": 0.9978,
+        "std": 0.0004
+      }
+    ],
+    "finding": "Score scale mismatch between models causes complete failure"
+  },
+  "test_b2_score_normalization": {
+    "r1": 68.8,
+    "r5": 95.6,
+    "r10": 99.2,
+    "mrr": 79.5,
+    "per_db": [
+      {
+        "db": "DB1(BGE-large)",
+        "r1": 71.3
+      },
+      {
+        "db": "DB2(MiniLM)",
+        "r1": 85.0
+      },
+      {
+        "db": "DB3(GTE-small)",
+        "r1": 50.0
+      }
+    ],
+    "retention": 68.8
+  },
+  "test_b3_rrf": {
+    "r1": 33.4,
+    "r5": 96.8,
+    "r10": 98.4,
+    "mrr": 60.2,
+    "per_db": [
+      {
+        "db": "DB1(BGE-large)",
+        "r1": 26.9
+      },
+      {
+        "db": "DB2(MiniLM)",
+        "r1": 6.0
+      },
+      {
+        "db": "DB3(GTE-small)",
+        "r1": 67.5
+      }
+    ],
+    "retention": 33.4
+  },
+  "test_c_baseline": {
+    "r1": 100.0,
+    "r5": 100.0,
+    "r10": 100.0,
+    "mrr": 100.0
+  },
+  "elapsed_seconds": 0.7
+}
