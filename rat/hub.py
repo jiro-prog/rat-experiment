@@ -212,6 +212,8 @@ class RATHub:
         query_emb : (N, D) query embeddings from query_model
         databases : list of (db_embeddings, db_model_name) tuples.
             Each db_embeddings is (M_i, D_i) from the corresponding model.
+            Each database should have at least ~50 documents for stable
+            score normalization.
         query_model : model name for queries
         top_k : number of results per query
 
