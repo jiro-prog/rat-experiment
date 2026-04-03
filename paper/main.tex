@@ -29,7 +29,7 @@
 \begin{abstract}
 Different embedding models map inputs to incompatible vector spaces, forcing costly re-embedding when models are switched or combined. We present \textbf{Relative Anchor Translation (RAT)}, a zero-shot protocol that translates between embedding spaces by comparing similarity profiles to shared anchor points, requiring no training data or learned parameters.
 
-Evaluating RAT on 11 models from 6 families (110 directed pairs, Recall@1 13--99\%), we find that \textbf{similarity compression}---the degree to which a model maps all inputs to a narrow angular cone---is the dominant predictor of RAT accuracy ($\rho = -0.62$). Z-score normalization is \textbf{conditionally beneficial}: it adds up to +88 points on low-compression databases but destroys accuracy ($-$62 points) on compressed ones. Both conditions are diagnosable from anchor embeddings alone, enabling automatic compatibility estimation before deployment. RAT also extends to cross-modal retrieval (text-only encoder searching a vision space at 21.2\% Recall@1, 106$\times$ random baseline, zero visual training).
+Evaluating RAT on 11 models from 6 families (110 directed pairs, Recall@1 13--99\%), we find that \textbf{similarity compression}---the degree to which a model maps all inputs to a narrow angular cone---is the dominant predictor of RAT accuracy ($\rho = -0.62$). Z-score normalization is \textbf{conditionally beneficial}: it adds up to +88 points on low-compression databases but destroys accuracy ($-$62 points) on compressed ones. Both conditions are diagnosable from anchor embeddings alone, enabling automatic compatibility estimation before deployment. Three application scenarios demonstrate practical value: same-family model upgrades retain 94\% retrieval accuracy at 0.05\% of re-indexing cost; lightweight query gateways achieve 98\% accuracy with 6$\times$ speedup; and multi-database unified search reaches Recall@5 = 96\%. RAT also extends to cross-modal retrieval (text-only encoder searching a vision space at 21.2\% Recall@1, 106$\times$ random baseline, zero visual training). Code and library: \texttt{pip install rat-embed}.
 \end{abstract}
 
 %% ============================================================
@@ -86,6 +86,8 @@ When anchor inter-similarity is compressed into a narrow range (e.g., E5-large: 
   \hat{r}_Y(y_j) = \frac{r_Y(y_j) - \mu_j}{\sigma_j}, \quad \mu_j = \frac{1}{K}\sum_k [r_Y(y_j)]_k, \quad \sigma_j = \mathrm{std}(r_Y(y_j))
 \end{equation}
 The query representation $r_X(x)$ is left unnormalized. DB-side z-score exactly matches both-side normalization across all pairs, while query-side normalization is consistently harmful (\S\ref{sec:asymmetric}).
+
+\textbf{Adaptive application.} Z-score is conditionally beneficial: it helps when the DB model has low similarity compression but \emph{destroys} accuracy on compressed models (\S\ref{sec:asymmetric}). We apply z-score adaptively based on the DB model's sim\_mean (mean pairwise cosine similarity among anchors): apply when sim\_mean $< 0.65$, skip otherwise. This threshold is diagnosable from anchor embeddings alone, requiring no retrieval evaluation.
 
 Algorithm~1 summarizes the complete protocol.
 
@@ -341,6 +343,27 @@ Notably, RAT also accesses structure that CLIP misses. Among the 125 queries in 
 \textbf{Model Stitching and Alignment.} \citet{bansal2021revisiting} train affine stitching layers; \citet{merullo2022linearly} learn linear projections for vision-language bridging; Procrustes alignment \citep{conneau2018word} fits orthogonal maps. These achieve higher precision but require paired supervision and per-pair optimization. RAT trades peak accuracy for universality: zero parameters, CPU execution, $O(1)$ cost per new model. The approaches are complementary.
 
 %% ============================================================
+\section{Applications}
+\label{sec:applications}
+%% ============================================================
+
+The 110-pair evaluation establishes RAT's accuracy profile. We now re-analyze this data through the lens of three practical deployment scenarios, requiring no new computation.
+
+\subsection{Model Update Without Re-indexing}
+
+When upgrading from an old embedding model to a new one, the standard approach requires re-encoding the entire database---a cost that scales linearly with database size. RAT replaces this with encoding only $K$ anchor texts with both models ($K{=}500$ in our experiments).
+
+Among 7 same-family upgrade pairs (BGE-small$\to$base, small$\to$large, base$\to$large; E5 and GTE variants), RAT achieves a mean \textbf{Retention Rate} (RAT Recall@1 / re-index Recall@1) of \textbf{93.6\%}, with all pairs above 88\%. For a 1M-document database, re-indexing with a large model takes $\sim$3.5 hours; RAT requires $\sim$6 seconds (500 anchor encodes + matrix multiplication), a cost ratio of 0.05\%.
+
+\subsection{Lightweight Query Gateway}
+
+Using a small, fast model for query encoding while searching a database built with a larger, more accurate model reduces query latency without rebuilding the database. GTE-small (33M params, $\sim$500 docs/sec) querying a GTE-large (335M params, $\sim$80 docs/sec) database achieves \textbf{98.4\% Recall@1 with 6.2$\times$ query speedup}. Cross-family pairs (e.g., MiniLM$\to$BGE-large) achieve 82.4\% at the same speedup.
+
+\subsection{Multi-Database Unified Search}
+
+Organizations with databases built using different models can search them jointly via RATHub. However, naive concatenation of relative representations fails: score scales differ across models (e.g., GTE's compressed representations produce cosine similarities near 1.0, dominating results from other databases). \textbf{Per-database score normalization}---z-scoring similarity scores within each database before merging---resolves this, achieving Recall@1 = 68.8\% and \textbf{Recall@5 = 95.6\%} across three databases (BGE-large, MiniLM, GTE-small). RRF achieves only 33.4\% Recall@1 due to discarding confidence information. Full comparison of merging strategies appears in Appendix~\ref{app:multidb}.
+
+%% ============================================================
 \section{Limitations}
 \label{sec:limitations}
 %% ============================================================
@@ -352,7 +375,7 @@ Notably, RAT also accesses structure that CLIP misses. Among the 125 queries in 
 \label{sec:conclusion}
 %% ============================================================
 
-RAT translates between embedding spaces without training via three composable steps (FPS + polynomial kernel + conditional DB-side z-score), achieving Recall@1 from 13\% to 99\% across 110 directed pairs spanning 11 models from 6 families. A systematic analysis reveals that a single property---\emph{similarity compression} (sim\_mean)---predicts RAT accuracy with $\rho = -0.62$, and determines whether z-score normalization helps ($+$88pp on low-compression DBs) or hurts ($-$62pp on compressed DBs). Both diagnostics require only encoding shared anchors, enabling automatic compatibility estimation before deployment. Same-family model pairs achieve 89--98\% regardless of compression, though the relative contributions of shared architecture, data, and training objective cannot be separated in the current design. Rosetta Stone anchors extend RAT across modalities (21.2\% Recall@1, zero visual training). Adding a new model requires only encoding shared anchors---no paired data, no gradients, no GPU.
+RAT translates between embedding spaces without training via three composable steps (FPS + polynomial kernel + adaptive DB-side z-score), achieving Recall@1 from 13\% to 99\% across 110 directed pairs spanning 11 models from 6 families. Similarity compression (sim\_mean) predicts RAT accuracy ($\rho = -0.62$) and determines whether z-score helps ($+$88pp) or hurts ($-$62pp)---both diagnosable from anchor embeddings alone. Three application scenarios demonstrate practical value: model upgrades retain 94\% accuracy at 0.05\% of re-indexing cost; lightweight query gateways achieve 98\% accuracy with 6$\times$ speedup; and multi-database unified search reaches Recall@5 = 96\% with per-database score normalization. Rosetta Stone anchors extend RAT across modalities (21.2\% Recall@1, zero visual training). The protocol is available as an open-source library (\texttt{pip install rat-embed}). Adding a new model requires only encoding shared anchors---no paired data, no gradients, no GPU.
 
 %% ============================================================
 % References
@@ -452,9 +475,32 @@ D$\to$J (z-sc)  & 22.0 & 20.8 & 21.0 & 19.8 & 20.6 & 20.8 & 0.7 \\
 \end{tabular}
 \end{table}
 
+\section{Multi-Database Merging Strategies}
+\label{app:multidb}
+
+Table~\ref{tab:multidb} compares three strategies for merging search results across databases built with different embedding models (BGE-large, MiniLM, GTE-small; 167 documents each; BGE-large queries).
+
+\begin{table}[h]
+\centering
+\caption{Multi-database merging strategies. Per-DB score normalization (z-score on similarity scores per database before merging) achieves the best Recall@1.}
+\label{tab:multidb}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Method & R@1 & R@5 & R@10 \\
+\midrule
+Baseline (re-index all) & 100.0 & 100.0 & 100.0 \\
+\textbf{Score normalization} & \textbf{68.8} & \textbf{95.6} & \textbf{99.2} \\
+Reciprocal Rank Fusion & 33.4 & 96.8 & 98.4 \\
+Naive vstack & 30.8 & 33.2 & 33.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Naive vstack fails because relative representations from different models have incompatible score scales: GTE-small (sim\_mean = 0.68, z-score skipped) produces norms 3$\times$ higher than other models, causing its documents to dominate all rankings. Score normalization resolves this by standardizing per-query similarity distributions within each database before merging. RRF discards confidence information, treating a DB1 top-1 with score 0.95 identically to a DB2 top-1 with score 0.3.
+
 \section{Reproducibility}
 \label{app:repro}
 
-All experiments run on CPU (Intel, WSL2). Software: Python 3.12, sentence-transformers $\geq$2.2, transformers $\geq$4.30, scikit-learn $\geq$1.3. Random seed = 42 for all experiments unless otherwise noted. Code: \url{https://github.com/jiro-prog/rat-experiment}.
+All experiments run on CPU (Intel, WSL2). Software: Python 3.12, sentence-transformers $\geq$2.2, transformers $\geq$4.30, scikit-learn $\geq$1.3. Random seed = 42 for all experiments unless otherwise noted. Code: \url{https://github.com/jiro-prog/rat-experiment}. Library: \texttt{pip install rat-embed} (v0.2.0).
 
 \end{document}
