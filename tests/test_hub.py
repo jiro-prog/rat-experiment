@@ -99,6 +99,63 @@ class TestEstimateCompatibility:
             hub_3models.estimate_compatibility("model_x", "nonexistent")
 
 
+class TestRetrieveMulti:
+    def test_returns_correct_shape(self, hub_3models, rng):
+        q = _make_normalized(rng, 3, 32)
+        db1 = _make_normalized(rng, 40, 64)
+        db2 = _make_normalized(rng, 30, 16)
+        result = hub_3models.retrieve_multi(
+            q,
+            databases=[(db1, "model_y"), (db2, "model_z")],
+            query_model="model_x",
+            top_k=5,
+        )
+        assert result["indices"].shape == (3, 5)
+        assert result["scores"].shape == (3, 5)
+        assert result["db_labels"].shape == (3, 5)
+
+    def test_db_labels_valid(self, hub_3models, rng):
+        q = _make_normalized(rng, 2, 32)
+        db1 = _make_normalized(rng, 20, 64)
+        db2 = _make_normalized(rng, 15, 16)
+        result = hub_3models.retrieve_multi(
+            q,
+            databases=[(db1, "model_y"), (db2, "model_z")],
+            query_model="model_x",
+            top_k=10,
+        )
+        # db_labels should be 0 or 1
+        assert np.all(result["db_labels"] >= 0)
+        assert np.all(result["db_labels"] <= 1)
+
+    def test_scores_descending(self, hub_3models, rng):
+        q = _make_normalized(rng, 2, 32)
+        db1 = _make_normalized(rng, 30, 64)
+        db2 = _make_normalized(rng, 20, 16)
+        result = hub_3models.retrieve_multi(
+            q,
+            databases=[(db1, "model_y"), (db2, "model_z")],
+            query_model="model_x",
+            top_k=10,
+        )
+        for i in range(2):
+            scores = result["scores"][i]
+            assert np.all(scores[:-1] >= scores[1:])
+
+    def test_global_indices_valid(self, hub_3models, rng):
+        q = _make_normalized(rng, 2, 32)
+        db1 = _make_normalized(rng, 25, 64)
+        db2 = _make_normalized(rng, 20, 16)
+        result = hub_3models.retrieve_multi(
+            q,
+            databases=[(db1, "model_y"), (db2, "model_z")],
+            query_model="model_x",
+            top_k=10,
+        )
+        assert np.all(result["indices"] >= 0)
+        assert np.all(result["indices"] < 45)  # 25 + 20
+
+
 class TestSaveLoad:
     def test_roundtrip(self, hub_3models, rng):
         emb = _make_normalized(rng, 10, 32)

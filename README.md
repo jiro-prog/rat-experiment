@@ -66,6 +66,34 @@ d = hub.transform("e5", db_emb, role="db")
 results = hub.retrieve(query_emb, db_emb, "minilm", "e5", top_k=10)
 ```
 
+> **Important:** All models must use anchors from the **same texts** in the
+> **same order**. Select anchor indices once (e.g., via FPS on one model),
+> then use those indices for every model.
+
+### Multi-DB search
+
+Search across multiple databases built with different models:
+
+```python
+results = hub.retrieve_multi(
+    query_emb,
+    databases=[
+        (db1_emb, "bge"),       # BGE database
+        (db2_emb, "minilm"),    # MiniLM database
+        (db3_emb, "e5"),        # E5 database
+    ],
+    query_model="bge",
+    top_k=10,
+)
+# results["indices"]   → (N, 10) global indices
+# results["scores"]    → (N, 10) normalized scores
+# results["db_labels"] → (N, 10) which DB each result came from (0, 1, 2)
+```
+
+`retrieve_multi` uses per-database score normalization internally to make
+scores comparable across databases. Do not vstack relative representations
+from different models — their score scales differ.
+
 ## Paper
 
 See the [Zenodo record](https://zenodo.org/records/19401277) for the full experiment report.

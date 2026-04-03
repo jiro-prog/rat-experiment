@@ -48,6 +48,12 @@ class RATHub:
     ) -> None:
         """Register anchor embeddings for a model.
 
+        All models must use anchors from the **same texts** in the
+        **same order**. For example, select K anchor indices via FPS
+        on one model's candidates, then use those same indices to
+        extract anchors from every model. Mismatched anchor texts
+        will cause cross-model retrieval to fail silently.
+
         Parameters
         ----------
         model_name : identifier for this model
@@ -187,6 +193,69 @@ class RATHub:
         sorted_scores = np.take_along_axis(scores, indices, axis=1)
 
         return {"indices": indices, "scores": sorted_scores}
+
+    def retrieve_multi(
+        self,
+        query_emb: np.ndarray,
+        databases: list[tuple[np.ndarray, str]],
+        query_model: str,
+        top_k: int = 10,
+    ) -> dict:
+        """Search across multiple databases built with different models.
+
+        Uses per-database score normalization to make scores comparable
+        across databases. Do NOT vstack relative representations from
+        different models — their score scales differ.
+
+        Parameters
+        ----------
+        query_emb : (N, D) query embeddings from query_model
+        databases : list of (db_embeddings, db_model_name) tuples.
+            Each db_embeddings is (M_i, D_i) from the corresponding model.
+        query_model : model name for queries
+        top_k : number of results per query
+
+        Returns
+        -------
+        {"indices": (N, top_k), "scores": (N, top_k), "db_labels": (N, top_k)}
+            indices are global (offset by cumulative DB sizes).
+            db_labels[i][j] is the database index (0, 1, ...) for each result.
+        """
+        q_rel = self.transform(query_model, query_emb, role="query")
+        q_norm = q_rel / (np.linalg.norm(q_rel, axis=1, keepdims=True) + 1e-10)
+
+        n_queries = len(query_emb)
+        total_docs = sum(db_emb.shape[0] for db_emb, _ in databases)
+        merged_scores = np.empty((n_queries, total_docs), dtype=np.float32)
+
+        offset = 0
+        for db_emb, db_model in databases:
+            d_rel = self.transform(db_model, db_emb, role="db")
+            d_norm = d_rel / (np.linalg.norm(d_rel, axis=1, keepdims=True) + 1e-10)
+            sim = q_norm @ d_norm.T  # (N, M_i)
+
+            # Per-query z-score normalization for cross-DB comparability
+            mu = sim.mean(axis=1, keepdims=True)
+            sigma = sim.std(axis=1, keepdims=True)
+            sigma[sigma == 0] = 1.0
+            merged_scores[:, offset:offset + db_emb.shape[0]] = (sim - mu) / sigma
+
+            offset += db_emb.shape[0]
+
+        top_k = min(top_k, total_docs)
+        indices = np.argsort(-merged_scores, axis=1)[:, :top_k]
+        sorted_scores = np.take_along_axis(merged_scores, indices, axis=1)
+
+        # Map global indices to DB labels
+        db_labels = np.empty_like(indices)
+        offset = 0
+        for db_idx, (db_emb, _) in enumerate(databases):
+            m = db_emb.shape[0]
+            mask = (indices >= offset) & (indices < offset + m)
+            db_labels[mask] = db_idx
+            offset += m
+
+        return {"indices": indices, "scores": sorted_scores, "db_labels": db_labels}
 
     # ── Compatibility ──
 
