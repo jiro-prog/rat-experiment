@@ -1,0 +1,447 @@
+{
+  "experiment": "C2a: Model Update Without Re-indexing",
+  "date": "2026-04-04",
+  "config": {
+    "K": 500,
+    "kernel": "poly(degree=2, coef0=1.0)",
+    "candidate_pool": 2000,
+    "num_queries": 500,
+    "reindex_baseline": "100% (same-model retrieval)",
+    "direction": "old=DB(col), new=query(row)",
+    "zscore_applied_to": "DB side (old model)"
+  },
+  "summary": {
+    "same_family": {
+      "auto_mean": 93.6,
+      "auto_min": 88.4,
+      "best_mean": 93.7,
+      "best_min": 88.4
+    },
+    "cross_family": {
+      "auto_mean": 20.1,
+      "auto_min": 0.4,
+      "best_mean": 66.1,
+      "best_min": 0.4
+    }
+  },
+  "tier1_same_family": [
+    {
+      "old_model": "BAAI/bge-small-en-v1.5",
+      "new_model": "BAAI/bge-base-en-v1.5",
+      "old_label": "C",
+      "new_label": "K",
+      "family": "BGE",
+      "tier": "same_family",
+      "description": "BGE-small \u2192 BGE-base",
+      "dims": "384\u2192768",
+      "r1_baseline": 98.6,
+      "r1_zscore": 98.0,
+      "mrr_baseline": 99.23333333333333,
+      "best_achievable": 98.6,
+      "best_method": "baseline",
+      "auto_retention": 98.0,
+      "auto_method": "zscore",
+      "sim_mean_old": 0.3794,
+      "sim_mean_new": 0.3744,
+      "zscore_rec_old": "recommended"
+    },
+    {
+      "old_model": "BAAI/bge-small-en-v1.5",
+      "new_model": "BAAI/bge-large-en-v1.5",
+      "old_label": "C",
+      "new_label": "E",
+      "family": "BGE",
+      "tier": "same_family",
+      "description": "BGE-small \u2192 BGE-large",
+      "dims": "384\u21921024",
+      "r1_baseline": 88.0,
+      "r1_zscore": 89.8,
+      "mrr_baseline": 93.03508658008658,
+      "best_achievable": 89.8,
+      "best_method": "zscore",
+      "auto_retention": 89.8,
+      "auto_method": "zscore",
+      "sim_mean_old": 0.3794,
+      "sim_mean_new": 0.4664,
+      "zscore_rec_old": "recommended"
+    },
+    {
+      "old_model": "BAAI/bge-base-en-v1.5",
+      "new_model": "BAAI/bge-large-en-v1.5",
+      "old_label": "K",
+      "new_label": "E",
+      "family": "BGE",
+      "tier": "same_family",
+      "description": "BGE-base \u2192 BGE-large",
+      "dims": "768\u21921024",
+      "r1_baseline": 93.60000000000001,
+      "r1_zscore": 94.6,
+      "mrr_baseline": 96.27843137254901,
+      "best_achievable": 94.6,
+      "best_method": "zscore",
+      "auto_retention": 94.6,
+      "auto_method": "zscore",
+      "sim_mean_old": 0.3744,
+      "sim_mean_new": 0.4664,
+      "zscore_rec_old": "recommended"
+    },
+    {
+      "old_model": "intfloat/e5-small-v2",
+      "new_model": "intfloat/multilingual-e5-large",
+      "old_label": "F",
+      "new_label": "B",
+      "family": "E5",
+      "tier": "same_family",
+      "description": "E5-small-v2 \u2192 E5-multi-large",
+      "dims": "384\u21921024",
+      "r1_baseline": 90.0,
+      "r1_zscore": 87.6,
+      "mrr_baseline": 92.24996006185111,
+      "best_achievable": 90.0,
+      "best_method": "baseline",
+      "auto_retention": 90.0,
+      "auto_method": "baseline",
+      "sim_mean_old": 0.6959,
+      "sim_mean_new": 0.7054,
+      "zscore_rec_old": "harmful"
+    },
+    {
+      "old_model": "intfloat/multilingual-e5-small",
+      "new_model": "intfloat/multilingual-e5-large",
+      "old_label": "G",
+      "new_label": "B",
+      "family": "E5",
+      "tier": "same_family",
+      "description": "E5-multi-small \u2192 E5-multi-large",
+      "dims": "384\u21921024",
+      "r1_baseline": 95.8,
+      "r1_zscore": 95.8,
+      "mrr_baseline": 97.37088235294118,
+      "best_achievable": 95.8,
+      "best_method": "zscore",
+      "auto_retention": 95.8,
+      "auto_method": "baseline",
+      "sim_mean_old": 0.7221,
+      "sim_mean_new": 0.7054,
+      "zscore_rec_old": "harmful"
+    },
+    {
+      "old_model": "intfloat/e5-small-v2",
+      "new_model": "intfloat/multilingual-e5-small",
+      "old_label": "F",
+      "new_label": "G",
+      "family": "E5",
+      "tier": "same_family",
+      "description": "E5-small-v2 \u2192 E5-multi-small",
+      "dims": "384\u2192384",
+      "r1_baseline": 88.4,
+      "r1_zscore": 87.0,
+      "mrr_baseline": 92.80301281763658,
+      "best_achievable": 88.4,
+      "best_method": "baseline",
+      "auto_retention": 88.4,
+      "auto_method": "baseline",
+      "sim_mean_old": 0.6959,
+      "sim_mean_new": 0.7221,
+      "zscore_rec_old": "harmful"
+    },
+    {
+      "old_model": "thenlper/gte-small",
+      "new_model": "thenlper/gte-large",
+      "old_label": "H",
+      "new_label": "I",
+      "family": "GTE",
+      "tier": "same_family",
+      "description": "GTE-small \u2192 GTE-large",
+      "dims": "384\u21921024",
+      "r1_baseline": 98.4,
+      "r1_zscore": 39.800000000000004,
+      "mrr_baseline": 99.2,
+      "best_achievable": 98.4,
+      "best_method": "baseline",
+      "auto_retention": 98.4,
+      "auto_method": "baseline",
+      "sim_mean_old": 0.6831,
+      "sim_mean_new": 0.6758,
+      "zscore_rec_old": "harmful"
+    }
+  ],
+  "tier2_cross_family": [
+    {
+      "old_model": "sentence-transformers/all-MiniLM-L6-v2",
+      "new_model": "BAAI/bge-small-en-v1.5",
+      "old_label": "A",
+      "new_label": "C",
+      "family": "cross",
+      "tier": "cross_family",
+      "description": "MiniLM \u2192 BGE-small",
+      "dims": "384\u2192384",
+      "r1_baseline": 34.0,
+      "r1_zscore": 94.19999999999999,
+      "mrr_baseline": 46.99592141443443,
+      "best_achievable": 94.19999999999999,
+      "best_method": "zscore",
+      "auto_retention": 34.0,
+      "auto_method": "baseline",
+      "sim_mean_old": 0.02,
+      "sim_mean_new": 0.3794,
+      "zscore_rec_old": "not_needed"
+    },
+    {
+      "old_model": "sentence-transformers/all-MiniLM-L6-v2",
+      "new_model": "BAAI/bge-large-en-v1.5",
+      "old_label": "A",
+      "new_label": "E",
+      "family": "cross",
+      "tier": "cross_family",
+      "description": "MiniLM \u2192 BGE-large",
+      "dims": "384\u21921024",
+      "r1_baseline": 5.800000000000001,
+      "r1_zscore": 79.60000000000001,
+      "mrr_baseline": 13.694897308047723,
+      "best_achievable": 79.60000000000001,
+      "best_method": "zscore",
+      "auto_retention": 5.800000000000001,
+      "auto_method": "baseline",
+      "sim_mean_old": 0.02,
+      "sim_mean_new": 0.4664,
+      "zscore_rec_old": "not_needed"
+    },
+    {
+      "old_model": "sentence-transformers/all-MiniLM-L6-v2",
+      "new_model": "thenlper/gte-small",
+      "old_label": "A",
+      "new_label": "H",
+      "family": "cross",
+      "tier": "cross_family",
+      "description": "MiniLM \u2192 GTE-small",
+      "dims": "384\u2192384",
+      "r1_baseline": 1.2,
+      "r1_zscore": 85.6,
+      "mrr_baseline": 3.8547825865619076,
+      "best_achievable": 85.6,
+      "best_method": "zscore",
+      "auto_retention": 1.2,
+      "auto_method": "baseline",
+      "sim_mean_old": 0.02,
+      "sim_mean_new": 0.6831,
+      "zscore_rec_old": "not_needed"
+    },
+    {
+      "old_model": "sentence-transformers/all-MiniLM-L6-v2",
+      "new_model": "thenlper/gte-large",
+      "old_label": "A",
+      "new_label": "I",
+      "family": "cross",
+      "tier": "cross_family",
+      "description": "MiniLM \u2192 GTE-large",
+      "dims": "384\u21921024",
+      "r1_baseline": 0.6,
+      "r1_zscore": 76.6,
+      "mrr_baseline": 3.2710523250081622,
+      "best_achievable": 76.6,
+      "best_method": "zscore",
+      "auto_retention": 0.6,
+      "auto_method": "baseline",
+      "sim_mean_old": 0.02,
+      "sim_mean_new": 0.6758,
+      "zscore_rec_old": "not_needed"
+    },
+    {
+      "old_model": "sentence-transformers/all-mpnet-base-v2",
+      "new_model": "BAAI/bge-large-en-v1.5",
+      "old_label": "J",
+      "new_label": "E",
+      "family": "cross",
+      "tier": "cross_family",
+      "description": "MPNet \u2192 BGE-large",
+      "dims": "768\u21921024",
+      "r1_baseline": 8.0,
+      "r1_zscore": 81.6,
+      "mrr_baseline": 19.7580529880468,
+      "best_achievable": 81.6,
+      "best_method": "zscore",
+      "auto_retention": 8.0,
+      "auto_method": "baseline",
+      "sim_mean_old": 0.0154,
+      "sim_mean_new": 0.4664,
+      "zscore_rec_old": "not_needed"
+    },
+    {
+      "old_model": "thenlper/gte-small",
+      "new_model": "BAAI/bge-large-en-v1.5",
+      "old_label": "H",
+      "new_label": "E",
+      "family": "cross",
+      "tier": "cross_family",
+      "description": "GTE-small \u2192 BGE-large",
+      "dims": "384\u21921024",
+      "r1_baseline": 89.4,
+      "r1_zscore": 46.0,
+      "mrr_baseline": 93.65619047619049,
+      "best_achievable": 89.4,
+      "best_method": "baseline",
+      "auto_retention": 89.4,
+      "auto_method": "baseline",
+      "sim_mean_old": 0.6831,
+      "sim_mean_new": 0.4664,
+      "zscore_rec_old": "harmful"
+    },
+    {
+      "old_model": "nomic-ai/nomic-embed-text-v1.5",
+      "new_model": "BAAI/bge-large-en-v1.5",
+      "old_label": "L",
+      "new_label": "E",
+      "family": "cross",
+      "tier": "cross_family",
+      "description": "Nomic \u2192 BGE-large",
+      "dims": "768\u21921024",
+      "r1_baseline": 0.2,
+      "r1_zscore": 0.4,
+      "mrr_baseline": 1.2564987246911965,
+      "best_achievable": 0.4,
+      "best_method": "zscore",
+      "auto_retention": 0.4,
+      "auto_method": "zscore",
+      "sim_mean_old": 0.5012,
+      "sim_mean_new": 0.4664,
+      "zscore_rec_old": "recommended"
+    },
+    {
+      "old_model": "sentence-transformers/clip-ViT-B-32",
+      "new_model": "BAAI/bge-large-en-v1.5",
+      "old_label": "D",
+      "new_label": "E",
+      "family": "cross",
+      "tier": "cross_family",
+      "description": "CLIP \u2192 BGE-large",
+      "dims": "512\u21921024",
+      "r1_baseline": 2.0,
+      "r1_zscore": 21.6,
+      "mrr_baseline": 6.468566845286808,
+      "best_achievable": 21.6,
+      "best_method": "zscore",
+      "auto_retention": 21.6,
+      "auto_method": "zscore",
+      "sim_mean_old": 0.4299,
+      "sim_mean_new": 0.4664,
+      "zscore_rec_old": "recommended"
+    }
+  ],
+  "cost_analysis": {
+    "anchor_count": 500,
+    "encode_throughput": {
+      "small_33M_cpu": "~500 docs/sec",
+      "base_109M_cpu": "~200 docs/sec",
+      "large_335M_cpu": "~80 docs/sec"
+    },
+    "rat_transform_time_measured": {
+      "10K": "0.06s",
+      "100K": "0.45s",
+      "1M": "4.5s"
+    },
+    "scenarios": [
+      {
+        "db_size": "10K",
+        "reindex_time_small": "20s",
+        "reindex_time_large": "2min",
+        "rat_total": "~1s",
+        "encode_cost_ratio": "5.00%"
+      },
+      {
+        "db_size": "100K",
+        "reindex_time_small": "3min",
+        "reindex_time_large": "21min",
+        "rat_total": "~2s",
+        "encode_cost_ratio": "0.50%"
+      },
+      {
+        "db_size": "1M",
+        "reindex_time_small": "33min",
+        "reindex_time_large": "3.5h",
+        "rat_total": "~6s",
+        "encode_cost_ratio": "0.05%"
+      },
+      {
+        "db_size": "10M",
+        "reindex_time_small": "5.6h",
+        "reindex_time_large": "34.7h",
+        "rat_total": "~31s",
+        "encode_cost_ratio": "0.01%"
+      }
+    ]
+  },
+  "zscore_safety": {
+    "threshold": 0.65,
+    "per_model": {
+      "A": {
+        "name": "sentence-transformers/all-MiniLM-L6-v2",
+        "sim_mean": 0.02,
+        "recommendation": "not_needed"
+      },
+      "B": {
+        "name": "intfloat/multilingual-e5-large",
+        "sim_mean": 0.7054,
+        "recommendation": "harmful"
+      },
+      "C": {
+        "name": "BAAI/bge-small-en-v1.5",
+        "sim_mean": 0.3794,
+        "recommendation": "recommended"
+      },
+      "D": {
+        "name": "sentence-transformers/clip-ViT-B-32",
+        "sim_mean": 0.4299,
+        "recommendation": "recommended"
+      },
+      "E": {
+        "name": "BAAI/bge-large-en-v1.5",
+        "sim_mean": 0.4664,
+        "recommendation": "recommended"
+      },
+      "F": {
+        "name": "intfloat/e5-small-v2",
+        "sim_mean": 0.6959,
+        "recommendation": "harmful"
+      },
+      "G": {
+        "name": "intfloat/multilingual-e5-small",
+        "sim_mean": 0.7221,
+        "recommendation": "harmful"
+      },
+      "H": {
+        "name": "thenlper/gte-small",
+        "sim_mean": 0.6831,
+        "recommendation": "harmful"
+      },
+      "I": {
+        "name": "thenlper/gte-large",
+        "sim_mean": 0.6758,
+        "recommendation": "harmful"
+      },
+      "J": {
+        "name": "sentence-transformers/all-mpnet-base-v2",
+        "sim_mean": 0.0154,
+        "recommendation": "not_needed"
+      },
+      "K": {
+        "name": "BAAI/bge-base-en-v1.5",
+        "sim_mean": 0.3744,
+        "recommendation": "recommended"
+      },
+      "L": {
+        "name": "nomic-ai/nomic-embed-text-v1.5",
+        "sim_mean": 0.5012,
+        "recommendation": "recommended"
+      }
+    },
+    "harmful_models": [
+      "B (intfloat/multilingual-e5-large, sim_mean=0.7054)",
+      "F (intfloat/e5-small-v2, sim_mean=0.6959)",
+      "G (intfloat/multilingual-e5-small, sim_mean=0.7221)",
+      "H (thenlper/gte-small, sim_mean=0.6831)",
+      "I (thenlper/gte-large, sim_mean=0.6758)"
+    ],
+    "finding": "GTE family (H, I) correctly detected as harmful (sim_mean ~0.68 > threshold 0.65). Auto mode avoids z-score for these models, using baseline instead."
+  }
+}

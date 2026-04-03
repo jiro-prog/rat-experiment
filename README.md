@@ -44,6 +44,10 @@ d_rel = translator.transform(db_emb, "b")                 # db side (z-score app
 d_rel = translator.transform(db_emb, "b", role="query")   # override: skip z-score
 ```
 
+> **Note:** For cross-family model pairs (e.g., MiniLM → BGE), use `normalize="always"`
+> when constructing the translator. The default `"auto"` mode may skip z-score normalization
+> for some models where it would actually help in cross-model scenarios.
+
 ## Advanced: RATHub (multi-model)
 
 ```python
