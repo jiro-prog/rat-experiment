@@ -1,0 +1,76 @@
+% 11×11 RAT Recall@1 matrix (best of baseline/z-score)
+\begin{table*}[t]
+\centering
+\caption{RAT Recall@1 (\%) across 11 embedding models (110 directed pairs).
+Each cell: best of baseline and z-score DB-side normalization.
+Rows = query model, columns = DB model. \textbf{Bold} = same family.}
+\label{tab:matrix}
+\small
+\begin{tabular}{lrrrrrrrrrrr}
+\toprule
+Query $\downarrow$ DB $\rightarrow$ & \textbf{A} & \textbf{B} & \textbf{C} & \textbf{D} & \textbf{E} & \textbf{F} & \textbf{G} & \textbf{H} & \textbf{I} & \textbf{J} & \textbf{K} \\
+ & {\scriptsize MiniLM} & {\scriptsize E5} & {\scriptsize BGE} & {\scriptsize CLIP} & {\scriptsize BGE} & {\scriptsize E5} & {\scriptsize E5} & {\scriptsize GTE} & {\scriptsize GTE} & {\scriptsize MPNet} & {\scriptsize BGE} \\
+\midrule
+\textbf{A} {\scriptsize MiniLM} & --- & 80 & 97 & {\color{red}25} & 82 & 88 & 83 & 93 & 88 & 98 & 95 \\
+\textbf{B} {\scriptsize E5} & 66 & --- & 73 & {\color{red}10} & 50 & \textbf{90} & \textbf{96} & 70 & 72 & 74 & 67 \\
+\textbf{C} {\scriptsize BGE} & 94 & 71 & --- & 32 & \textbf{81} & 88 & 76 & 99 & 95 & 87 & \textbf{99} \\
+\textbf{D} {\scriptsize CLIP} & {\color{red}20} & {\color{red}17} & {\color{red}18} & --- & {\color{red}21} & {\color{red}13} & {\color{red}14} & {\color{red}18} & {\color{red}20} & {\color{red}22} & {\color{red}20} \\
+\textbf{E} {\scriptsize BGE} & 80 & 68 & \textbf{90} & {\color{red}22} & --- & 51 & 64 & 89 & 99 & 82 & \textbf{95} \\
+\textbf{F} {\scriptsize E5} & 89 & \textbf{83} & 95 & {\color{red}18} & 63 & --- & \textbf{83} & 91 & 86 & 84 & 89 \\
+\textbf{G} {\scriptsize E5} & 60 & \textbf{94} & 69 & {\color{red}9} & 43 & \textbf{88} & --- & 71 & 63 & 56 & 65 \\
+\textbf{H} {\scriptsize GTE} & 86 & 39 & 99 & {\color{red}27} & 53 & 67 & 39 & --- & \textbf{98} & 75 & 92 \\
+\textbf{I} {\scriptsize GTE} & 77 & 47 & 91 & {\color{red}27} & 84 & 61 & 37 & \textbf{98} & --- & 78 & 94 \\
+\textbf{J} {\scriptsize MPNet} & 99 & 84 & 94 & {\color{red}25} & 87 & 83 & 81 & 89 & 93 & --- & 94 \\
+\textbf{K} {\scriptsize BGE} & 90 & 73 & \textbf{99} & 34 & \textbf{89} & 81 & 74 & 96 & 97 & 88 & --- \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+% Predictor summary table
+\begin{table}[t]
+\centering
+\caption{Predictors of RAT Recall@1 across model pairs (OLS regression).
+CLIP-excluded column verifies robustness beyond the CLIP--text model divide.}
+\label{tab:predictors}
+\small
+\begin{tabular}{lcc}
+\toprule
+Predictor & R$^2$ (all, $N$=110) & R$^2$ (w/o CLIP, $N$=90) \\
+\midrule
+max(sim\_mean) & 0.050 & \textbf{0.167} \\
+same\_family & 0.095 & 0.093 \\
+min(anchor entropy) & 0.586$^*$ & 0.033 \\
+max(sim\_mean) + same\_family & --- & 0.242 \\
+All features (7 vars) & 0.811 & --- \\
+\midrule
+\multicolumn{3}{l}{\textit{Spearman rank correlation:}} \\
+max(sim\_mean) vs R@1 & $\rho$=$-$0.34 & $\rho$=$-$\textbf{0.62} \\
+\bottomrule
+\multicolumn{3}{l}{\scriptsize $^*$Driven almost entirely by CLIP vs.\ text-model separation.} \\
+\end{tabular}
+\end{table}
+
+% Model overview table
+\begin{table}[t]
+\centering
+\caption{Embedding models used in the 12-model diversity experiment. sim\_mean: mean pairwise cosine similarity among 500 query embeddings.}
+\label{tab:models}
+\small
+\begin{tabular}{clcccc}
+\toprule
+ID & Family & Params & Dim & Training & sim\_mean \\
+\midrule
+A & MiniLM & 22M & 384 & Contr.+Distill & 0.028 \\
+B & E5 & 560M & 1024 & WeakSup+Distill & 0.716 \\
+C & BGE & 33M & 384 & Contr.+RetroMAE & 0.402 \\
+D & CLIP & 63M & 512 & CLIP Contr. & 0.588 \\
+E & BGE & 335M & 1024 & Contr.+RetroMAE & 0.528 \\
+F & E5 & 33M & 384 & WeakSup+Distill & 0.705 \\
+G & E5 & 118M & 384 & WeakSup+Distill & 0.734 \\
+H & GTE & 33M & 384 & Multi-stage & 0.701 \\
+I & GTE & 335M & 1024 & Multi-stage & 0.690 \\
+J & MPNet & 109M & 768 & MSE Distill & 0.028 \\
+K & BGE & 109M & 768 & Contr.+RetroMAE & 0.408 \\
+\bottomrule
+\end{tabular}
+\end{table}

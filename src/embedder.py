@@ -25,7 +25,11 @@ def _prepare_texts(model_name: str, texts: list[str]) -> list[str]:
 
 def embed_texts(model_name: str, texts: list[str]) -> np.ndarray:
     """テキストをembeddingに変換する。L2正規化済み。"""
-    model = SentenceTransformer(model_name)
+    kwargs = {}
+    if model_name in config.MODEL_CONFIGS:
+        if config.MODEL_CONFIGS[model_name].get("trust_remote_code"):
+            kwargs["trust_remote_code"] = True
+    model = SentenceTransformer(model_name, **kwargs)
     prepared = _prepare_texts(model_name, texts)
     embeddings = model.encode(
         prepared,

@@ -1,0 +1,39 @@
+{
+  "results": {
+    "K=4000": {
+      "AxE_baseline": {
+        "recall_at_1": 0.194,
+        "recall_at_5": 0.498,
+        "recall_at_10": 0.668,
+        "mrr": 0.3401407557310452,
+        "median_rank": 6
+      },
+      "AxE_reverse": {
+        "recall_at_1": 0.046,
+        "recall_at_5": 0.17,
+        "recall_at_10": 0.24,
+        "mrr": 0.11954695125413453,
+        "median_rank": 32
+      },
+      "anchor_stats": {
+        "minilm": {
+          "label": "MiniLM (K=4000)",
+          "mean_sim": 0.08790817111730576,
+          "std_sim": 0.11805910617113113,
+          "min_sim": -0.34973275661468506,
+          "max_sim": 1.0000004768371582,
+          "entropy": 2.43358327722133
+        },
+        "clip_img": {
+          "label": "CLIP-image (K=4000)",
+          "mean_sim": 0.47133418917655945,
+          "std_sim": 0.08902838081121445,
+          "min_sim": 0.07386361807584763,
+          "max_sim": 0.979068398475647,
+          "entropy": 2.213372068675939
+        }
+      }
+    }
+  },
+  "elapsed_seconds": 412.78952836990356
+}

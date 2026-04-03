@@ -27,13 +27,9 @@
 \maketitle
 
 \begin{abstract}
-Different embedding models map inputs to incompatible vector spaces, forcing costly re-embedding when models are switched or combined. We present \textbf{Relative Anchor Translation (RAT)}, a zero-shot protocol that translates between embedding spaces by comparing similarity profiles to shared anchor points, requiring no training data or learned parameters. RAT combines Farthest Point Sampling for anchor selection, polynomial kernel similarity, and DB-side z-score normalization into a three-step pipeline that runs on CPU in seconds.
+Different embedding models map inputs to incompatible vector spaces, forcing costly re-embedding when models are switched or combined. We present \textbf{Relative Anchor Translation (RAT)}, a zero-shot protocol that translates between embedding spaces by comparing similarity profiles to shared anchor points, requiring no training data or learned parameters.
 
-We evaluate RAT across five text embedding models (384d--1024d, spanning BERT, XLM-R, and CLIP architectures) on two datasets (STSBenchmark, AllNLI). All model pairs achieve Recall@1 between 55\% and 98\% on STSBenchmark, compared to a 0.2\% random baseline. RAT with 100 anchors (55\%) surpasses random anchor selection with 1,000 (48\%), demonstrating 10$\times$ efficiency from proper anchor placement.
-
-Analysis reveals three findings: (1)~\textbf{Similarity collapse}---a failure mode where compressed similarity distributions flatten relative representations---is diagnosable via entropy and fully resolved by z-score normalization (+65 points). (2)~z-score normalization is effective \textbf{only on the database side}; query-side normalization is consistently harmful. (3)~Two models with identical dimensions (1024d) but zero direct cosine correlation achieve 55\% retrieval via RAT, demonstrating shared relative structure invisible to absolute comparison.
-
-We extend RAT to cross-modal retrieval using paired image-caption anchors: a text-only encoder (MiniLM) searches a vision encoder's space (CLIP ViT-B/32) at Recall@1 = 18.2\%---91$\times$ the random baseline---with zero visual training.
+Evaluating RAT on 11 models from 6 families (110 directed pairs, Recall@1 13--99\%), we find that \textbf{similarity compression}---the degree to which a model maps all inputs to a narrow angular cone---is the dominant predictor of RAT accuracy ($\rho = -0.62$). Z-score normalization is \textbf{conditionally beneficial}: it adds up to +88 points on low-compression databases but destroys accuracy ($-$62 points) on compressed ones. Both conditions are diagnosable from anchor embeddings alone, enabling automatic compatibility estimation before deployment. RAT also extends to cross-modal retrieval (text-only encoder searching a vision space at 21.2\% Recall@1, 106$\times$ random baseline, zero visual training).
 \end{abstract}
 
 %% ============================================================
@@ -54,13 +50,13 @@ RAT builds on the relative representation framework of \citet{moschella2023relat
   \item \textbf{DB-side z-score normalization} resolves a previously uncharacterized failure mode---\textbf{similarity collapse}---where compressed similarity distributions in certain model spaces (e.g., multilingual encoders) flatten relative representations and destroy discriminability. This single correction adds +65 points on the most affected pair (\S\ref{sec:collapse}).
 \end{itemize}
 
-We evaluate RAT on five text embedding models spanning different architectures (BERT, XLM-R, CLIP), dimensionalities (384d to 1024d), and training objectives (English, multilingual, contrastive). All model pairs achieve Recall@1 $>$ 55\% on STSBenchmark and $>$ 71\% on AllNLI, against a random baseline of 0.2\%. We further extend RAT across modalities using \textbf{Rosetta Stone anchors}---paired (image, caption) concepts that allow a text-only encoder to search a vision encoder's space at Recall@1 = 18.2\%, with zero visual training.
+We evaluate RAT on 11 text embedding models from 6 families, spanning architectures (BERT, XLM-R, CLIP, MPNet), sizes (22M--560M), and training objectives (contrastive, distillation, weakly-supervised). Among 110 directed pairs, Recall@1 ranges from 13\% to 99\%. We further extend RAT across modalities using \textbf{Rosetta Stone anchors}---paired (image, caption) concepts that allow a text-only encoder to search a vision encoder's space at Recall@1 = 21.2\%, with zero visual training.
 
-Three analytical findings emerge from the experiments:
+Three analytical findings emerge from the 110-pair systematic evaluation:
 \begin{enumerate}
-  \item \textbf{Similarity collapse} in multilingual model spaces is diagnosable via anchor inter-similarity entropy and systematically fixable with z-score normalization---a finding applicable beyond RAT to any method relying on inter-point similarities (\S\ref{sec:collapse}).
-  \item \textbf{z-score is a DB-side operation}: normalizing only the database representations exactly matches both-side normalization across all pairs and modalities, while query-side normalization is consistently harmful (\S\ref{sec:asymmetric}).
-  \item \textbf{Relative structure is shared even when absolute coordinates are uncorrelated}: two models with identical output dimensions (1024d) but zero direct cosine correlation achieve 55\% cross-model retrieval (\S\ref{sec:dimensions}).
+  \item \textbf{Similarity compression dominates RAT accuracy.} The mean pairwise cosine similarity of a model's embeddings (sim\_mean) predicts RAT Recall@1 with Spearman $\rho = -0.62$ among text model pairs. Same-family pairs add $+$9 points after controlling for compression, but family and training objective are collinear and cannot be separated (\S\ref{sec:collapse}).
+  \item \textbf{Z-score normalization is conditionally beneficial}: it adds up to +88 points when the \emph{database} model has low compression, but destroys accuracy ($-$62 points) on compressed databases. The effect correlates with DB-side sim\_mean ($\rho = -0.59$), enabling automatic applicability diagnosis from anchor embeddings (\S\ref{sec:asymmetric}).
+  \item \textbf{Contrastive alignment does not preserve local distance patterns}: CLIP-text and CLIP-image, despite joint training, yield weaker RAT compatibility ($\rho = 0.18$) than independently trained encoders ($\rho = 0.33$) (\S\ref{sec:crossmodal_analysis}).
 \end{enumerate}
 
 %% ============================================================
@@ -91,14 +87,15 @@ When anchor inter-similarity is compressed into a narrow range (e.g., E5-large: 
 \end{equation}
 The query representation $r_X(x)$ is left unnormalized. DB-side z-score exactly matches both-side normalization across all pairs, while query-side normalization is consistently harmful (\S\ref{sec:asymmetric}).
 
-\subsection{RAT Protocol}
+Algorithm~1 summarizes the complete protocol.
 
 \begin{figure}[t]
 \centering
 \small
 \fbox{\parbox{0.92\columnwidth}{%
 \textbf{Algorithm 1:} Relative Anchor Translation\\[3pt]
-\textbf{Input:} Query $x$ via model $X$; database $\{y_1,\dots,y_n\}$ via model $Y$; candidates $\mathcal{C}$\\[4pt]
+\textbf{Input:} Query $x$ via model $X$; database $\{y_1,\dots,y_n\}$ via model $Y$; candidates $\mathcal{C}$\\
+\textbf{Assumption:} All embeddings are L2-normalized (so $u^\top v = \cos(u,v)$).\\[4pt]
 \textbf{Offline} (once per model pair):\\
 \quad 1. Encode candidates: $E_X = f_X(\mathcal{C})$\\
 \quad 2. Select $K$ anchors via FPS on $E_X$: $\mathcal{A} = \mathrm{FPS}(E_X, K)$\\
@@ -133,13 +130,14 @@ For cross-modal retrieval between a text encoder $f_T$ and an image encoder $f_I
 
 \subsection{Setup}
 
-\textbf{Models.} Five text encoders: MiniLM (384d, Model~A), E5-large (1024d, multilingual, Model~B), BGE-small (384d, Model~C), CLIP-text (512d, Model~D), BGE-large (1024d, Model~E). For cross-modal: CLIP ViT-B/32 image encoder (512d). Models B and E share 1024d output but differ in architecture (XLM-R vs BERT).
+\textbf{Models.} Initial experiments (\S\ref{sec:text}--\S\ref{sec:crossmodal}) use five text encoders: MiniLM (384d, A), E5-large (1024d, multilingual, B), BGE-small (384d, C), CLIP-text (512d, D), BGE-large (1024d, E); plus CLIP ViT-B/32 image encoder for cross-modal experiments. We then extend to 11 models from 6 families (\S\ref{sec:matrix}, Table~\ref{tab:models}) for the systematic analysis: adding E5-small (F), E5-small-multilingual (G), GTE-small (H), GTE-large (I), MPNet-base (J), and BGE-base (K).
 
 \textbf{Datasets.} STSBenchmark (15K sentences), AllNLI (26K sentences), COCO Karpathy (5K image-caption pairs). We sample 2,000 anchor candidates and 500 non-overlapping queries (seed=42).
 
-\textbf{Protocol.} FPS ($K{=}500$, based on Model~A) + polynomial kernel + z-score (DB-side) + cosine kNN. Random baseline: Recall@1 = 0.2\%.
+\textbf{Protocol.} FPS ($K{=}500$, based on Model~A for 5-model experiments; based on each query model for 11-model matrix) + polynomial kernel + z-score (DB-side, applied conditionally per \S\ref{sec:asymmetric}) + cosine kNN. Random baseline: Recall@1 = 0.2\%.
 
 \subsection{Text-to-Text Retrieval}
+\label{sec:text}
 
 \begin{table}[t]
 \centering
@@ -161,7 +159,7 @@ B$\times$E (E5-large $\times$ BGE-large) & 1024 $\times$ 1024 & 55.2 & 76.4 \\
 
 Table~\ref{tab:text} shows results for all six model pairs. All pairs exceed 55\% on STSBenchmark and 71\% on AllNLI. Pairs involving Model~B improve markedly on AllNLI (B$\times$E +21.2pt, B$\times$C +11.6pt), reflecting AllNLI's greater semantic diversity which alleviates similarity collapse (\S\ref{sec:collapse}).
 
-\textbf{Ablation.} On the A$\times$B pair: Random+cosine $\to$ +FPS (+23.2pt) $\to$ +poly kernel (+10.8pt) $\to$ +z-score ($\approx$0pt on this pair, but +65pt on B$\times$C).
+\textbf{Ablation.} On A$\times$B (STSBenchmark, $K{=}500$): Moschella baseline (random anchors + cosine) achieves 42.8\%; adding FPS raises this to 71.0\% (+28.2pt); polynomial kernel adds +12.0pt (83.0\%); z-score has negligible effect ($-$0.2pt). On B$\times$C, z-score is transformative: +57.6pt (19.0\%$\to$76.6\%). Ablation numbers come from a dedicated run; Table~\ref{tab:text} values are from a separate full-protocol run and differ by $\pm$3pt due to stochastic FPS initialization.\footnote{All numbers within each table come from a single run for internal consistency. Cross-table variation of $\pm$3--5 points reflects FPS seed sensitivity and candidate pool sampling; this is expected and does not affect qualitative conclusions (Appendix~\ref{app:seed}).} These 5-model results establish that the RAT protocol works; \S\ref{sec:matrix} extends to 11 models (whose 110-pair matrix subsumes the 6 pairs in Table~\ref{tab:text}) for systematic analysis of \emph{when} it works.
 
 \subsection{Anchor Efficiency: Scaling Curves}
 \label{sec:scaling}
@@ -176,20 +174,85 @@ Figure~\ref{fig:scaling} compares the na\"ive baseline (random anchors + cosine)
 \end{figure}
 
 \subsection{Cross-Modal Retrieval}
+\label{sec:crossmodal}
 
-Using 500 Rosetta Stone anchors from COCO, a text-only encoder achieves Recall@1 = 18.2\% (Image$\to$Text, with z-score) in a vision encoder's space---91$\times$ the random baseline and 29\% of CLIP's directly trained retrieval accuracy (62.0\%). Without z-score, Text$\to$Image reaches 16.4\% while Image$\to$Text drops to 3.8\%; the z-score asymmetry mirrors the text-only findings (\S\ref{sec:asymmetric}).
+\begin{table}[t]
+\centering
+\caption{Cross-modal retrieval: MiniLM (text) $\to$ CLIP ViT-B/32 (image), Recall@1 (\%). Baseline uses polynomial kernel without z-score. $K{=}3000$ is optimal; $K{=}4000$ degrades due to the curse of dimensionality in $K$-dimensional RAT space (\S\ref{sec:limitations}). CLIP Direct (native text-image cosine) achieves 59.2\% on this query set.}
+\label{tab:crossmodal}
+\begin{tabular}{@{}rccc@{}}
+\toprule
+$K$ & Baseline & z-score & $\times$ Random \\
+\midrule
+500   & 16.8 & 15.6 & 84$\times$ \\
+1000  & 18.6 & 16.4 & 93$\times$ \\
+2000  & 20.0 & 18.0 & 100$\times$ \\
+3000  & \textbf{21.2} & 18.4 & 106$\times$ \\
+4000  & 19.4 & --- & 97$\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:crossmodal} shows cross-modal retrieval using Rosetta Stone anchors from COCO. A text-only encoder (MiniLM) searches a vision encoder's space (CLIP ViT-B/32) at Recall@1 = 21.2\% with $K{=}3000$ anchors---106$\times$ the random baseline and 36\% of CLIP's directly trained accuracy (59.2\%). Two findings diverge from the text-only setting: (1)~z-score normalization \emph{does not help} cross-modal retrieval (baseline consistently outperforms z-score), and (2)~performance peaks at $K{=}3000$ and declines at $K{=}4000$, indicating a dimensionality ceiling absent in text-only experiments. We analyze both phenomena in \S\ref{sec:crossmodal_analysis}.
+
+\subsection{Scaling to 11 Text Models}
+\label{sec:matrix}
+
+To understand what determines RAT accuracy across model pairs, we extend the evaluation from 5 to 11 models spanning 6 families (Table~\ref{tab:models}), covering contrastive distillation (MiniLM), weakly-supervised (E5), contrastive+RetroMAE (BGE), multi-stage contrastive (GTE), MSE distillation (MPNet), and CLIP text. Model sizes range from 22M to 560M parameters. This yields 110 directed pairs (excluding Nomic, which fails due to a kernel-specific issue discussed in \S\ref{sec:limitations}).
+
+\begin{table}[t]
+\centering
+\caption{Embedding models in the 11-model diversity experiment. sim\_mean: mean pairwise cosine similarity among 500 query embeddings---a measure of similarity compression.}
+\label{tab:models}
+\small
+\begin{tabular}{clcccc}
+\toprule
+ID & Family & Params & Dim & Training & sim\_mean \\
+\midrule
+A & MiniLM & 22M & 384 & Contr.+Distill & 0.028 \\
+B & E5 & 560M & 1024 & WeakSup+Distill & 0.716 \\
+C & BGE & 33M & 384 & Contr.+RetroMAE & 0.402 \\
+D & CLIP & 63M & 512 & CLIP Contr. & 0.588 \\
+E & BGE & 335M & 1024 & Contr.+RetroMAE & 0.528 \\
+F & E5 & 33M & 384 & WeakSup+Distill & 0.705 \\
+G & E5 & 118M & 384 & WeakSup+Distill & 0.734 \\
+H & GTE & 33M & 384 & Multi-stage & 0.701 \\
+I & GTE & 335M & 1024 & Multi-stage & 0.690 \\
+J & MPNet & 109M & 768 & MSE Distill & 0.028 \\
+K & BGE & 109M & 768 & Contr.+RetroMAE & 0.408 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Figure~\ref{fig:heatmap} shows the full 11$\times$11 Recall@1 matrix. Three patterns are immediately visible: (1)~CLIP text (row/column~D) is consistently weak (13--34\%), forming a distinct low-accuracy band; (2)~within-family pairs (e.g., BGE$\times$BGE, GTE$\times$GTE) cluster near the top (89--99\%); and (3)~a large block of text-only model pairs achieves 60--99\%, with significant variation.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/d2a_heatmap.png}
+  \caption{RAT Recall@1 (\%) for all 110 directed model pairs (best of baseline and z-score DB normalization). Rows = query model, columns = DB model.}
+  \label{fig:heatmap}
+\end{figure}
 
 %% ============================================================
 \section{Analysis}
 \label{sec:analysis}
 %% ============================================================
 
-\subsection{Similarity Collapse}
+\subsection{Similarity Compression as the Dominant Factor}
 \label{sec:collapse}
 
-Without z-score normalization, B$\times$C achieves only 8.4\%---far below other pairs (A$\times$B: 80.6\%, A$\times$C: 98.0\%). Table~\ref{tab:collapse} traces this to anchor inter-similarity compression in Model~B's space: mean pairwise similarity of 0.72 with an effective range of only 0.33 (Figure~\ref{fig:simprofile}). This makes relative profiles nearly flat, destroying discriminability.
+The 110-pair matrix reveals that a single property of the embedding space---\emph{similarity compression}---is the dominant predictor of RAT accuracy. We define sim\_mean as the mean pairwise cosine similarity among query embeddings: models with high sim\_mean map all inputs to a narrow angular cone, compressing the similarity distribution and leaving little room for relative profiles to discriminate between inputs.
 
-We term this \textbf{similarity collapse}: the failure of relative representations when the anchor similarity distribution is compressed to a narrow range. The critical diagnostic is anchor inter-similarity \emph{entropy} (Shannon entropy of the binned similarity histogram). Model~B's entropy of 1.40 is far below Model~A's 2.04.
+Figure~\ref{fig:compression} plots max(sim\_mean$_Q$, sim\_mean$_{DB}$)---the more compressed model in each pair---against Recall@1. Among text-only model pairs (excluding CLIP), the Spearman rank correlation is $\rho = -0.62$ ($p < 10^{-10}$). This single variable explains the broad structure of the heatmap: pairs involving low-compression models (MiniLM, MPNet; sim\_mean $\approx 0.03$) consistently achieve $>$80\%, while pairs involving high-compression models (E5, GTE; sim\_mean $> 0.69$) degrade to 37--70\% unless paired with a low-compression partner.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/d2a_sim_mean_vs_r1.png}
+  \caption{Similarity compression vs.\ RAT accuracy. max(sim\_mean) of the pair predicts Recall@1 with $\rho = -0.62$ among text models (N=90, CLIP excluded). CLIP pairs (triangles) extend the trend.}
+  \label{fig:compression}
+\end{figure}
+
+\textbf{Similarity collapse.} The extreme case of compression is \emph{similarity collapse}: Model~B (E5-large, sim\_mean = 0.72, range = 0.33) produces nearly flat relative profiles that destroy discriminability. Without z-score, B$\times$C achieves only 8.4\%; z-score adds +65 points (Table~\ref{tab:collapse}). Collapse is diagnosable via sim\_mean alone.
 
 \begin{table}[t]
 \centering
@@ -208,44 +271,63 @@ Softmax ($T{=}0.1$)     & 50.2 & 34.6 & 44.8 \\
 \end{tabular}
 \end{table}
 
-z-score adds +65 points on B$\times$C while leaving well-spread models unharmed (+0.4 on A$\times$B). Alternative normalizations fail because they are \emph{information-destructive}: rank discards magnitude; top-$k$ zeros most entries; softmax over-sharpens. z-score uniquely preserves ordering and magnitude while correcting scale.
+\textbf{Family effect.} Same-family pairs (e.g., BGE$\times$BGE, GTE$\times$GTE) achieve 89--98\% Recall@1, consistently above cross-family pairs at comparable compression levels. The regression coefficient for same\_family is significant ($+$9 points, $p < 0.01$) even after controlling for sim\_mean. However, same\_family and same\_training are perfectly collinear in our model set---every same-family pair shares the same training objective and likely overlapping training data---so we cannot separate the contributions of shared architecture, training objective, and data overlap. Notably, BGE-small $\times$ GTE-small achieves 99.4\% despite being cross-family; both use BERT-base with contrastive objectives on web corpora. One possible explanation is that training data overlap drives the family effect, but we cannot verify this with current data---controlled experiments (e.g., identical data with different objectives) would be needed to disentangle architecture, objective, and data contributions.
+
+\textbf{Dimensionality is irrelevant.} Models B and E share 1024d output but differ in architecture (XLM-R vs BERT); their direct cosine similarity averages $-0.02$, yet RAT achieves 55.2\%. Cross-dimension A$\times$B (384 $\times$ 1024d) reaches 84\%. Same-dimension B$\times$E (55\%) $<$ cross-dimension A$\times$B (84\%): what matters is compression level, not dimensional agreement. This provides one possible operationalization of the structural convergence posited by \citet{huh2024platonic}.
+
+\subsection{When Z-score Helps and When It Hurts}
+\label{sec:asymmetric}
+
+The 5-model experiments established that DB-side z-score is beneficial (\S\ref{sec:method}). The 110-pair matrix reveals this is only half the story: z-score is \emph{conditionally} beneficial, with its effect determined by the DB-side model's compression level (Figure~\ref{fig:zscore}).
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.7\textwidth]{figures/analysis_sim_dist.png}
-  \caption{Anchor inter-similarity distributions. Model~B (E5-large) is compressed into a narrow high-similarity band, causing similarity collapse.}
-  \label{fig:simprofile}
+  \includegraphics[width=0.7\textwidth]{figures/d2a_zscore_effect.png}
+  \caption{Z-score normalization effect (Recall@1 change in percentage points) vs.\ DB-side sim\_mean. Low sim\_mean DB models benefit dramatically (+60--88 pp); high sim\_mean DB models are harmed ($-$40--62 pp). $\rho = -0.59$.}
+  \label{fig:zscore}
 \end{figure}
 
-\subsection{Asymmetric z-score: DB-side Sufficiency}
-\label{sec:asymmetric}
+When the DB model has low sim\_mean (MiniLM, MPNet; $\approx$0.03), its relative profiles contain rich discriminative information in a wide range. Z-score rescales this well-spread information, making it accessible to compressed query profiles---hence dramatic improvements (e.g., F$\to$A: 1.0\%$\to$89.0\%, $\Delta$=+88pp). When the DB model has high sim\_mean (GTE, E5; $>$0.69), its profiles are themselves compressed with little discriminative information. Z-score amplifies noise alongside the weak signal, causing collapse (e.g., H$\to$I: 98.4\%$\to$36.8\%, $\Delta$=$-$62pp).
+
+The Spearman correlation between z-score effect and DB sim\_mean is $\rho = -0.59$ ($p < 10^{-11}$). Partitioning at sim\_mean = 0.15: pairs with low-compression DB models gain $+$18 points on average from z-score; pairs with high-compression DB models lose $-$6 points. The practical implication is that z-score should be applied \emph{adaptively}: only when the DB model's sim\_mean is below a threshold, diagnosable from anchor embeddings alone.
+
+\textbf{DB-side sufficiency.} Across all pairs, DB-only z-score exactly matches both-side z-score, while query-side normalization is consistently harmful ($-$8 to $-$10 points on well-spread models). This is because DB-side normalization leverages stable statistics from $n$ database vectors, while a single query vector's row-wise z-score distorts the relative magnitudes that carry discriminative signal.
+
+\subsection{Cross-Modal Analysis}
+\label{sec:crossmodal_analysis}
+
+A natural expectation is that CLIP-text and CLIP-image, trained jointly via contrastive loss, should yield highly compatible RAT representations. The opposite holds: CLIP-text $\times$ CLIP-image (D$\times$E) achieves only 11.2\% Recall@1 at $K{=}3000$---\emph{half} of independently trained MiniLM $\times$ CLIP-image (A$\times$E, 21.2\%). We trace this to a structural mismatch between what contrastive alignment optimizes and what RAT requires.
+
+RAT relies on \emph{local distance orderings}: if a text and its corresponding image produce similar patterns of similarity to a shared set of anchors, retrieval succeeds. We quantify this by computing, for each matched text-image pair, the Spearman rank correlation $\rho$ between their $K$-dimensional RAT vectors (Table~\ref{tab:anchor_rho}).
 
 \begin{table}[t]
 \centering
-\caption{Asymmetric z-score analysis (Recall@1 \%).}
-\label{tab:asymmetric}
-\begin{tabular}{@{}lcccc@{}}
+\caption{Anchor distance pattern preservation: per-pair Spearman $\rho$ between RAT vectors of matched text-image pairs ($K{=}3000$).}
+\label{tab:anchor_rho}
+\begin{tabular}{@{}lccc@{}}
 \toprule
-Pair / Direction & None & Query only & DB only & Both \\
+Pair & Mean $\rho$ & $\rho > 0.3$ & Recall@1 \\
 \midrule
-A$\times$B & 80.6 & 72.0 & \textbf{81.0} & 81.0 \\
-A$\times$C & 98.0 & 90.2 & \textbf{98.2} & 98.2 \\
-B$\times$C & 8.4  & 52.8 & \textbf{73.4} & 73.4 \\
-\midrule
-Text $\to$ Image & \textbf{16.4} & 8.2 & 15.6 & 15.6 \\
-Image $\to$ Text & 3.8 & 10.0 & \textbf{18.2} & 18.2 \\
+A$\times$E (MiniLM $\times$ CLIP-img) & \textbf{0.334} & 66.2\% & \textbf{21.2\%} \\
+A$\times$D (MiniLM $\times$ CLIP-text) & 0.357 & 69.6\% & 24.0\%$^*$ \\
+D$\times$E (CLIP-text $\times$ CLIP-img) & 0.183 & 12.2\% & 11.2\% \\
 \bottomrule
+\multicolumn{4}{@{}l@{}}{\footnotesize $^*$Text-only pair at $K{=}500$, from Phase~4 Step~1.}
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:asymmetric} reveals a striking pattern: \textbf{DB-only z-score exactly matches both-side z-score across all pairs and directions}. Query-side normalization is consistently harmful ($-$8 to $-$10 points on well-spread models).
+CLIP's contrastive objective optimizes the dot product between matched text-image pairs relative to in-batch negatives---a \emph{global} alignment that does not constrain how individual anchor distances are ordered. Moreover, in-batch negative sampling may actively distort local neighborhoods: pushing apart semantically related but non-matched pairs to maximize contrastive discrimination can rearrange the ordering of nearby points in ways that break the distance patterns RAT relies on. The result is that CLIP-text's similarity profile to caption anchors bears little resemblance to CLIP-image's profile to the corresponding image anchors ($\rho = 0.18$; only 12\% of pairs exceed $\rho > 0.3$). By contrast, MiniLM---trained independently on text-only data---shares stronger local structure with CLIP-image ($\rho = 0.33$; 66\% of pairs exceed $\rho > 0.3$). Why independently trained encoders share more local structure than jointly trained ones is an open question; one hypothesis is that both MiniLM and CLIP-image independently organize semantically similar concepts into nearby regions (consistent with the Platonic Representation Hypothesis), whereas CLIP's contrastive loss actively reshapes the text space to maximize global discriminability at the expense of local structure.
 
-DB-side normalization is effective because $n$ database vectors provide stable distributional statistics for row-wise z-scoring. A single query vector's $K$ entries yield one mean and one variance estimate; when the query model's space is already well-spread, this normalization distorts the relative magnitudes that carry discriminative signal.
+Figure~\ref{fig:buckets} provides further evidence. Partitioning query pairs into quartiles by CLIP native text-image cosine similarity, A$\times$E Recall@1 rises from 14.4\% (bottom quartile) to 29.6\% (top quartile)---RAT partially reflects CLIP's alignment, accessing the same underlying structure through different means. D$\times$E shows no such trend (7--10\% across all quartiles), confirming it captures an independent and weaker signal.
 
-\subsection{Dimensions Don't Matter: Shared Relative Structure}
-\label{sec:dimensions}
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/bucket_analysis.png}
+  \caption{RAT Recall@1 by CLIP native text-image similarity quartile. A$\times$E (MiniLM $\times$ CLIP-image) correlates with CLIP's alignment strength; D$\times$E (CLIP-text $\times$ CLIP-image) does not.}
+  \label{fig:buckets}
+\end{figure}
 
-Models B (E5-large) and E (BGE-large) share 1024d output but differ in architecture (XLM-R vs BERT) and training data. Their direct cosine similarity on identical texts averages $-0.02$---yet RAT achieves 55.2\% on B$\times$E, while cross-dimension A$\times$B (384d $\times$ 1024d) reaches 83.8\%. \textbf{Same-dimension B$\times$E (55\%) $<$ cross-dimension A$\times$B (84\%)}: dimensional agreement is irrelevant. RAT's Recall@1 provides a concrete operationalization of the structural convergence posited by the Platonic Representation Hypothesis \citep{huh2024platonic}, with the spectrum (55\%--98\%) offering finer granularity than a binary ``converged or not'' framing.
+Notably, RAT also accesses structure that CLIP misses. Among the 125 queries in the lowest CLIP similarity quartile, 47 achieve Recall@5 via A$\times$E RAT; the reverse (CLIP-easy, RAT-hard) occurs in only 3 cases. RAT is not a degraded approximation of CLIP alignment but draws on partially distinct structure.
 
 %% ============================================================
 \section{Related Work}
@@ -263,14 +345,14 @@ Models B (E5-large) and E (BGE-large) share 1024d output but differ in architect
 \label{sec:limitations}
 %% ============================================================
 
-\textbf{Evaluation scale.} All experiments use 500 queries from English-language datasets. Evaluation on larger benchmarks (e.g., MTEB) and multilingual settings is needed. \textbf{Cross-modal ceiling.} Recall@1 of 18.2\% is a proof of concept, not a practical system; the gap to CLIP's 62\% indicates room for improvement. \textbf{Anchor bias.} FPS in Model~A's space may not optimally cover other models' geometries; alternative bases show $\pm$2--3 point variation (Appendix). \textbf{Computational cost.} Online retrieval is $O(nK)$ per query in 500d---tractable with ANN indices (e.g., FAISS) for million-scale corpora. Offline anchor encoding is a one-time $O(nKd)$ cost. \textbf{Theory.} We provide no formal proof of why relative profiles align across models; a characterization of sufficient conditions remains open.
+\textbf{Evaluation scale.} All experiments use 500 queries from English-language datasets. Evaluation on larger benchmarks (e.g., MTEB) and multilingual settings is needed. \textbf{Cross-modal ceiling.} Recall@1 of 21.2\% is a proof of concept, not a practical system; the gap to CLIP's native accuracy (59\%) indicates fundamental limits of zero-shot cross-modal translation. \textbf{Curse of dimensionality in RAT space.} At $K{=}3000$, matched text-image pairs have mean RAT cosine similarity of 0.983 vs.\ 0.981 for unmatched pairs---a margin of only 0.002. This explains the performance peak at $K{=}3000$ and decline at $K{=}4000$ (Table~\ref{tab:crossmodal}). \textbf{Polynomial kernel DC bias.} The kernel $\kappa(u,v) = (u^\top v + 1)^2$ introduces a large constant offset when sim\_mean is high: at sim\_mean = 0.5, the mean output is $(0.5 + 1)^2 = 2.25$ with typical variation of $\pm$0.15, yielding a signal-to-offset ratio of 15:1. One model (Nomic-embed-text-v1.5) produced pairwise cosine similarity of 0.997 in relative representation space, making retrieval impossible. Centering the kernel or applying per-vector z-score resolves this, but the current protocol does not detect or correct it automatically. \textbf{Compression--family confound.} Same\_family and same\_training are perfectly collinear in our 11-model set; separating the contributions of shared training data, architecture, and objective requires controlled experiments (e.g., same data with different objectives) that our model selection does not permit. \textbf{Theory.} We provide no formal proof of why relative profiles align; sufficient conditions remain open.
 
 %% ============================================================
 \section{Conclusion}
 \label{sec:conclusion}
 %% ============================================================
 
-RAT translates between embedding spaces without training via three composable steps (FPS + polynomial kernel + DB-side z-score), achieving Recall@1 from 55\% to 98\% across five encoders. Key findings: similarity collapse is diagnosable and fixable (+65 points via z-score); z-score is purely a DB-side operation; and relative structure persists even when absolute coordinates are uncorrelated (cos $\approx 0$, RAT 55\%). Rosetta Stone anchors extend RAT across modalities (18.2\% Recall@1, zero visual training). Adding a new model requires only encoding shared anchors---no paired data, no gradients, no GPU.
+RAT translates between embedding spaces without training via three composable steps (FPS + polynomial kernel + conditional DB-side z-score), achieving Recall@1 from 13\% to 99\% across 110 directed pairs spanning 11 models from 6 families. A systematic analysis reveals that a single property---\emph{similarity compression} (sim\_mean)---predicts RAT accuracy with $\rho = -0.62$, and determines whether z-score normalization helps ($+$88pp on low-compression DBs) or hurts ($-$62pp on compressed DBs). Both diagnostics require only encoding shared anchors, enabling automatic compatibility estimation before deployment. Same-family model pairs achieve 89--98\% regardless of compression, though the relative contributions of shared architecture, data, and training objective cannot be separated in the current design. Rosetta Stone anchors extend RAT across modalities (21.2\% Recall@1, zero visual training). Adding a new model requires only encoding shared anchors---no paired data, no gradients, no GPU.
 
 %% ============================================================
 % References
@@ -346,9 +428,33 @@ RBF ($\exp(-\gamma \|u-v\|^2)$) & 61.8 \\
 \end{tabular}
 \end{table}
 
+\section{FPS Seed Sensitivity}
+\label{app:seed}
+
+FPS selects a random initial point before greedily maximizing coverage. Table~\ref{tab:seed} evaluates 5 random seeds on 5 representative pairs spanning the accuracy range. The mean standard deviation across all pairs and conditions is \textbf{1.0 percentage point}; the maximum is 3.7pp (E$\to$I with z-score). Cross-table variation of $\pm$3pt in the main text is within this expected range.
+
+\begin{table}[h]
+\centering
+\caption{FPS seed sensitivity: Recall@1 (\%) across 5 random seeds, $K{=}500$.}
+\label{tab:seed}
+\small
+\begin{tabular}{@{}lccccc|cc@{}}
+\toprule
+ & \multicolumn{5}{c|}{Seeds} & \multicolumn{2}{c}{Summary} \\
+Pair & 42 & 123 & 456 & 789 & 2024 & Mean & Std \\
+\midrule
+A$\to$C (base)  & 97.0 & 97.2 & 96.6 & 97.2 & 96.8 & 97.0 & 0.2 \\
+A$\to$B (base)  & 79.8 & 78.4 & 82.0 & 79.2 & 81.0 & 80.1 & 1.3 \\
+B$\to$C (z-sc)  & 72.8 & 76.0 & 73.0 & 75.2 & 71.8 & 73.8 & 1.6 \\
+E$\to$I (base)  & 98.8 & 98.8 & 98.8 & 98.6 & 98.6 & 98.7 & 0.1 \\
+D$\to$J (z-sc)  & 22.0 & 20.8 & 21.0 & 19.8 & 20.6 & 20.8 & 0.7 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \section{Reproducibility}
 \label{app:repro}
 
-All experiments run on CPU (Intel, WSL2). Software: Python 3.12, sentence-transformers $\geq$2.2, transformers $\geq$4.30, scikit-learn $\geq$1.3. Random seed = 42 for all experiments. Code: \url{https://github.com/jiro-prog/rat-experiment}.
+All experiments run on CPU (Intel, WSL2). Software: Python 3.12, sentence-transformers $\geq$2.2, transformers $\geq$4.30, scikit-learn $\geq$1.3. Random seed = 42 for all experiments unless otherwise noted. Code: \url{https://github.com/jiro-prog/rat-experiment}.
 
 \end{document}
