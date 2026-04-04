@@ -29,7 +29,7 @@
 \begin{abstract}
 Different embedding models map inputs to incompatible vector spaces, forcing costly re-embedding when models are switched or combined. We present \textbf{Relative Anchor Translation (RAT)}, a zero-shot protocol that translates between embedding spaces by comparing similarity profiles to shared anchor points, requiring no training data or learned parameters.
 
-Evaluating 17 models from 9 families---spanning BERT-family encoders, a decoder-based LLM, and a scale series from 22M to 335M parameters---we identify a \textbf{three-layer hierarchy} governing translation accuracy, with \textbf{RDM correlation as a binary gatekeeper}. BERT-family and newer models share zero representational structure at every level (global distances, local neighborhoods, cluster assignments), creating a hard boundary that no method---zero-shot or few-shot, parameter-free or learned---can cross. Scaling parameters 15$\times$ within a training recipe does not bridge this gap. Within compatible clusters, \textbf{similarity compression} ($\rho = -0.62$) predicts accuracy and guides method selection. RAT achieves Recall@1 from 13\% to 99\% across 110 directed pairs within compatible families, with a crossover against linear alignment at $K \approx 100$ anchors. We provide a practical decision protocol computable from anchor embeddings alone: determine feasibility, select the optimal method, and predict accuracy---without retrieval evaluation. Code: \texttt{pip install rat-embed}.
+Evaluating 17 models from 9 families---spanning BERT-family encoders, a decoder-based LLM, and a scale series from 22M to 335M parameters---we find that translation accuracy is governed by two continuous, independent factors: \textbf{RDM correlation} ($\rho = 0.425$ with R@1) captures shared representational structure, while \textbf{similarity compression} ($\rho = -0.477$) captures discriminability loss. All 17 models share structure to varying degrees; no binary boundary exists. RAT achieves Recall@1 from 0.2\% to 99.6\% across 272 directed pairs, with a crossover against linear alignment at $K \approx 100$ anchors. We provide a practical decision protocol computable from anchor embeddings alone: estimate expected accuracy, select the optimal method, and configure normalization---without retrieval evaluation. Code: \texttt{pip install rat-embed}.
 \end{abstract}
 
 %% ============================================================
@@ -50,14 +50,14 @@ RAT builds on the relative representation framework of \citet{moschella2023relat
   \item \textbf{DB-side z-score normalization} resolves a previously uncharacterized failure mode---\textbf{similarity collapse}---where compressed similarity distributions in certain model spaces (e.g., multilingual encoders) flatten relative representations and destroy discriminability. This single correction adds +65 points on the most affected pair (\S\ref{sec:collapse}).
 \end{itemize}
 
-We evaluate RAT on 17 text embedding models from 9 families, spanning architectures (BERT, XLM-R, CLIP, MPNet, decoder-based LLM), sizes (22M--1.5B), and training objectives (contrastive, distillation, weakly-supervised, instruction-tuned). Among 110 directed pairs within compatible families, Recall@1 ranges from 13\% to 99\%. We further extend RAT across modalities using \textbf{Rosetta Stone anchors}---paired (image, caption) concepts that allow a text-only encoder to search a vision encoder's space at Recall@1 = 21.2\%, with zero visual training.
+We evaluate RAT on 17 text embedding models from 9 families, spanning architectures (BERT, XLM-R, CLIP, MPNet, decoder-based LLM), sizes (22M--1.5B), and training objectives (contrastive, distillation, weakly-supervised, instruction-tuned). Across 272 directed pairs, Recall@1 ranges from 0.2\% to 99.6\%. We further extend RAT across modalities using \textbf{Rosetta Stone anchors}---paired (image, caption) concepts that allow a text-only encoder to search a vision encoder's space at Recall@1 = 21.2\%, with zero visual training.
 
 Four main findings emerge from the 17-model evaluation:
 \begin{enumerate}
-  \item \textbf{A three-layer diagnostic model for embedding translation.} We identify a hierarchy of factors: (1)~RDM correlation acts as a binary gatekeeper determining whether translation is feasible; (2)~similarity compression ($\rho = -0.62$) governs accuracy within compatible families; (3)~family membership and dimensionality refine predictions. This yields a practical decision protocol computable from anchor embeddings alone (\S\ref{sec:diagnostic}).
-  \item \textbf{The cross-cluster wall is absolute.} Extending to 17 models reveals a hard representational boundary: BERT-family and new-generation models share zero structure at every level---global (RDM $\rho \approx 0$), local ($k$-NN overlap $=$ random), and cluster (ARI $\approx 0$). Neither zero-shot methods nor few-shot linear maps (up to 200 labeled pairs) can cross it. Scaling parameters 15$\times$ within a training recipe produces no movement (\S\ref{sec:wall}).
-  \item \textbf{Similarity compression dominates within-cluster accuracy.} Z-score normalization adds up to +88 points on low-compression databases but destroys accuracy ($-$62 points) on compressed ones, diagnosable from sim\_mean alone (\S\ref{sec:asymmetric}).
-  \item \textbf{RAT and direct alignment are complementary.} A comparison across 132 pairs reveals a crossover at $K \approx 100$ anchors: RAT dominates with fewer anchors (74\% win rate at $K{=}50$); linear methods dominate with more ($>$90\% at $K{=}500$). Within clusters, few-shot Procrustes further improves on RAT (87\% vs.\ 79\% with 200 labeled pairs; \S\ref{sec:alignment}, \S\ref{sec:wall_positive}).
+  \item \textbf{A two-factor model for predicting translation accuracy.} RDM correlation ($\rho = 0.425$ with R@1) and similarity compression ($\rho = -0.477$) independently predict RAT accuracy across 272 pairs. Together they yield a practical decision protocol computable from anchor embeddings alone (\S\ref{sec:diagnostic}).
+  \item \textbf{Representational similarity is continuous, not binary.} All 17 models share structure to varying degrees (RDM $\rho \in [0.04, 0.87]$). No hard boundary separates model families; translation accuracy varies continuously with structural similarity (\S\ref{sec:newgen}).
+  \item \textbf{Similarity compression dominates within-family accuracy.} Z-score normalization adds up to +88 points on low-compression databases but destroys accuracy ($-$62 points) on compressed ones, diagnosable from sim\_mean alone (\S\ref{sec:asymmetric}).
+  \item \textbf{RAT and direct alignment are complementary.} A comparison across 132 pairs reveals a crossover at $K \approx 100$ anchors: RAT dominates with fewer anchors (74\% win rate at $K{=}50$); linear methods dominate with more ($>$90\% at $K{=}500$; \S\ref{sec:alignment}).
 \end{enumerate}
 
 %% ============================================================
@@ -201,7 +201,7 @@ Table~\ref{tab:crossmodal} shows cross-modal retrieval using Rosetta Stone ancho
 \subsection{Scaling to 11 Text Models}
 \label{sec:matrix}
 
-To understand what determines RAT accuracy across model pairs, we extend the evaluation from 5 to 11 models spanning 6 families (Table~\ref{tab:models}), covering contrastive distillation (MiniLM), weakly-supervised (E5), contrastive+RetroMAE (BGE), multi-stage contrastive (GTE), MSE distillation (MPNet), and CLIP text. Model sizes range from 22M to 560M parameters. A 12th model (Nomic-embed-text-v1.5, L) was initially excluded due to extreme similarity compression in relative space (0.997 pairwise cosine). Subsequent analysis (\S\ref{sec:newgen}) reveals a deeper reason: L belongs to a representationally distinct cluster, sharing zero RDM correlation with models A--K. The remaining 11 BERT-family models yield 110 directed pairs for the core analysis.
+To understand what determines RAT accuracy across model pairs, we extend the evaluation from 5 to 11 models spanning 6 families (Table~\ref{tab:models}), covering contrastive distillation (MiniLM), weakly-supervised (E5), contrastive+RetroMAE (BGE), multi-stage contrastive (GTE), MSE distillation (MPNet), and CLIP text. Model sizes range from 22M to 560M parameters. A 12th model (Nomic-embed-text-v1.5, L; sim\_mean = 0.529) was excluded from this core analysis because it does not belong to any of the six BERT-family groups. L is included in the 17-model expansion (\S\ref{sec:newgen}). The remaining 11 BERT-family models yield 110 directed pairs for the core analysis below.
 
 \begin{table}[t]
 \centering
@@ -237,7 +237,7 @@ Figure~\ref{fig:heatmap} shows the full 11$\times$11 Recall@1 matrix. Three patt
 \end{figure}
 
 %% ============================================================
-\subsection{Beyond BERT-Family: Scale and Cluster Structure}
+\subsection{Scaling to 17 Models: Continuous Representational Similarity}
 \label{sec:newgen}
 %% ============================================================
 
@@ -252,64 +252,66 @@ The 11-model evaluation above uses exclusively BERT-family encoders. To test whe
 \toprule
 ID & Model & Params & Dim & sim\_mean & Notes \\
 \midrule
-L & Nomic-v1.5 & 137M & 768 & 0.997$^\dagger$ & Unsup.\ contrastive \\
-M & GTE-Qwen2-1.5B & 1.5B & 1536 & 0.166 & Decoder-based LLM \\
-N & Arctic-m & 109M & 768 & 0.623 & \\
-O & Arctic-xs & 22M & 384 & 0.648 & \\
-P & Arctic-s & 33M & 384 & 0.615 & \\
-Q & Arctic-l & 335M & 1024 & 0.610 & \\
+L & Nomic-v1.5 & 137M & 768 & 0.529 & Unsup.\ contrastive \\
+M & GTE-Qwen2-1.5B & 1.5B & 1536 & 0.223 & Decoder-based LLM \\
+N & Arctic-m & 109M & 768 & 0.683 & \\
+O & Arctic-xs & 22M & 384 & 0.716 & \\
+P & Arctic-s & 33M & 384 & 0.685 & \\
+Q & Arctic-l & 335M & 1024 & 0.673 & \\
 \bottomrule
-\multicolumn{6}{@{}l@{}}{\footnotesize $^\dagger$Extreme compression; relative representations have pairwise cosine $>$0.99.}
 \end{tabular}
 \end{table}
 
-\subsubsection{Cluster Discovery}
-\label{sec:clusters}
+\subsubsection{Representational Structure Across 17 Models}
+\label{sec:rdm_structure}
 
-For each model, we compute a Representational Dissimilarity Matrix (RDM) from 2,000 candidate embeddings using cosine distance, then measure the Spearman rank correlation between every pair of models' RDMs. This captures whether two models impose similar pairwise distance orderings on the same set of texts. The resulting 17$\times$17 matrix reveals a sharp block-diagonal partition (Figure~\ref{fig:rdm_heatmap}). The 11 BERT-family models (A--K) form one cluster with mean pairwise $\rho = 0.45$ (range 0.20--0.86). The six newer models (L--Q) form a second cluster with mean $\rho = 0.59$ (range 0.50--0.87). Critically, the cross-cluster correlation is $\rho \approx 0.00$ (range $-0.03$ to $+0.02$)---the two groups share \emph{zero} representational structure.
+For each model, we compute a Representational Dissimilarity Matrix (RDM) from 2,000 candidate embeddings using cosine distance, then measure the Spearman rank correlation between every pair of models' RDMs. This captures whether two models impose similar pairwise distance orderings on the same set of texts.
+
+The resulting 17$\times$17 matrix (Figure~\ref{fig:rdm_heatmap}) reveals a \emph{continuous} gradient of representational similarity. Family-internal correlations are strong: E5 models (B, F, G; $\rho = 0.75$--$0.86$), GTE (H, I; $\rho = 0.86$), Arctic (N--Q; $\rho = 0.53$--$0.87$). Cross-family correlations vary widely, from near-zero (B$\leftrightarrow$N: $\rho = 0.10$; G$\leftrightarrow$Q: $\rho = 0.06$) to moderate (C$\leftrightarrow$H: $\rho = 0.74$; E$\leftrightarrow$O: $\rho = 0.54$). The overall range is $\rho \in [0.04, 0.87]$ with mean $0.41$ across 136 off-diagonal pairs. No binary cluster boundary exists; instead, representational similarity is a continuous variable that varies with training recipe, data, and family membership.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.85\textwidth]{figures/fig_rdm_heatmap.png}
-  \caption{RDM Spearman correlation between 17 embedding models. A clear block-diagonal structure emerges: BERT-family encoders (A--K) and new-generation models (L--Q) share no representational structure ($\rho \approx 0$). The Arctic scale series (N--Q) clusters tightly within the new-generation block.}
+  \includegraphics[width=0.85\textwidth]{figures/fig4_rdm_heatmap_v2.png}
+  \caption{RDM Spearman correlation between 17 embedding models. Family-internal blocks show strong correlations (E5, GTE, Arctic, BGE); cross-family correlations form a continuous gradient from $\rho = 0.04$ to $\rho = 0.74$. No binary cluster boundary is observed.}
   \label{fig:rdm_heatmap}
 \end{figure}
 
-This boundary affects all translation methods, not only RAT. On cross-cluster pairs at $K{=}500$, RAT achieves R@1 $\approx 0\%$ (e.g., M$\to$A: 0.6\%, N$\to$K: 0.0\%). Ridge regression and Procrustes alignment fail identically: 0.0--0.4\% on the same pairs. Within each cluster, all methods recover normally (e.g., N$\to$L: 40.8\% RAT / 94.6\% Ridge). The failure is structural, not methodological. We investigate this boundary in depth in \S\ref{sec:wall}.
+\subsubsection{RAT Accuracy Across 272 Directed Pairs}
+\label{sec:272pairs}
 
-\subsubsection{Scale Invariance of Representational Structure}
-\label{sec:scale}
-
-The Arctic series offers a natural experiment: does scaling model parameters change representational structure enough to bridge the cluster gap? Table~\ref{tab:scale_rdm} shows cross-cluster RDM correlations between each Arctic model and representative BERT-family models. \textbf{All values remain at $\rho \approx 0$ regardless of scale}, from 22M (Arctic-xs) to 335M (Arctic-l).
-
-\begin{table}[t]
-\centering
-\caption{Cross-cluster RDM correlation: Arctic models vs.\ BERT-family representatives. A 15$\times$ parameter increase (22M$\to$335M) produces no change in cross-cluster structure.}
-\label{tab:scale_rdm}
-\small
-\begin{tabular}{@{}lcccc|c@{}}
-\toprule
- & O (xs, 22M) & P (s, 33M) & N (m, 109M) & Q (l, 335M) & range \\
-\midrule
-A (MiniLM)   & $+$0.006 & $+$0.001 & $-$0.007 & $-$0.006 & 0.013 \\
-C (BGE-s)    & $-$0.006 & $-$0.017 & $-$0.008 & $-$0.012 & 0.011 \\
-J (MPNet)    & $+$0.018 & $+$0.007 & $+$0.009 & $+$0.010 & 0.011 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Within the Arctic series, RDM correlations are high and increase with scale proximity: O$\leftrightarrow$P (same dimension, $\rho = 0.78$), N$\leftrightarrow$Q ($\rho = 0.87$). RAT accuracy within the series ranges from 38\% to 94\% at $K{=}500$, following the expected sim\_mean and RDM dependencies.
-
-\textbf{Implications.} The training recipe---not model size---determines representational topology. A 15$\times$ parameter increase within the same recipe produces no movement toward the BERT cluster. This places a bound on the Platonic Representation Hypothesis \citep{huh2024platonic}: within the 22M--335M range, scaling alone does not drive convergence across training paradigms. Whether this boundary dissolves at larger scale (e.g., $>$1B parameters) remains open.
-
-Figure~\ref{fig:rdm_vs_r1} summarizes the relationship between representational compatibility and RAT accuracy across all 17 models: RDM correlation determines whether translation is possible at all, while sim\_mean predicts performance \emph{within} compatible clusters.
+Figure~\ref{fig:r1_matrix_17} shows the full 17$\times$17 Recall@1 matrix across all 272 directed pairs (mean 50.6\%, range 0.2\%--99.6\%). RAT achieves non-trivial accuracy on the vast majority of pairs, with failures concentrated in pairs where the query model has high similarity compression (B, F, G, H, I as query: R@1 $<$ 1\% regardless of target). This is the same compression-driven failure mode identified in \S\ref{sec:collapse}, not a structural incompatibility.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.75\textwidth]{figures/fig_rdm_vs_r1.png}
-  \caption{RDM correlation vs.\ Recall@1 at $K{=}500$ across 17 models. Cross-cluster pairs (gray $\times$; $\rho \approx 0$) uniformly fail regardless of method or sim\_mean. Intra-cluster pairs show sim\_mean-dependent performance. Arctic scale series members are highlighted with squares.}
+  \includegraphics[width=0.85\textwidth]{figures/fig3b_r1_matrix_v2.png}
+  \caption{RAT Recall@1 (\%) for all 272 directed pairs across 17 models ($K{=}500$, adaptive z-score). Low-accuracy rows correspond to high-compression query models (sim\_mean $> 0.65$), not structural incompatibility.}
+  \label{fig:r1_matrix_17}
+\end{figure}
+
+\subsubsection{Two-Factor Prediction of Translation Accuracy}
+\label{sec:twofactor}
+
+What determines whether a model pair can be translated, and how accurately? Across 272 pairs, two factors emerge as independent predictors (Figure~\ref{fig:rdm_vs_r1}):
+
+\begin{itemize}
+  \item \textbf{RDM correlation} ($\rho_\text{Spearman} = 0.425$, $p < 10^{-13}$): higher structural similarity yields higher accuracy. Mean R@1 rises monotonically from 27.6\% (RDM $\rho \in [0, 0.2)$) to 86.9\% (RDM $\rho \in [0.8, 1.0)$).
+  \item \textbf{Similarity compression} ($\rho_\text{Spearman} = -0.477$, $p < 10^{-16}$): higher compression in the query model yields lower accuracy. Mean R@1 drops from 79.1\% (sim\_mean $\in [0.2, 0.4)$) to 38.3\% (sim\_mean $\in [0.6, 0.8)$).
+\end{itemize}
+
+Critically, these factors are \emph{independent}: conditioning on sim\_mean bins, the RDM effect persists ($\rho = 0.34$--$0.49$ within each bin); conditioning on RDM bins, the compression effect persists. Neither subsumes the other.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig5_rdm_sim_vs_r1_v2.png}
+  \caption{Two-factor model of RAT accuracy across 272 directed pairs. Left: RDM correlation vs.\ R@1, colored by query-side sim\_mean. Right: sim\_mean vs.\ R@1, colored by RDM $\rho$. Both factors independently predict accuracy.}
   \label{fig:rdm_vs_r1}
 \end{figure}
+
+Comparing with the 11-model analysis (\S\ref{sec:collapse}), where sim\_mean alone achieved $\rho = -0.62$: expanding to 17 models introduces wider variation in RDM correlation, and the two-factor model captures variance that sim\_mean alone cannot explain. The 11-model result remains valid as a special case where all pairs share high RDM correlation ($\rho > 0.2$).
+
+\textbf{Scale within training recipe.} The Arctic series (22M--335M, same training recipe) shows high intra-family RDM ($\rho = 0.53$--$0.87$) and RAT accuracy of 39\%--92\% at $K{=}500$, following the two-factor prediction. Scaling parameters 15$\times$ within the same recipe does not qualitatively change representational structure.
+
+\textbf{Implications for PRH.} All 17 models share representational structure to varying degrees: the lowest cross-family RDM ($\rho = 0.04$) is small but positive, and CKA analysis confirms structural correspondence is significantly above chance for all pairs ($p < 0.01$; see Appendix~\ref{app:correction}). This supports the Platonic Representation Hypothesis \citep{huh2024platonic} as a matter of \emph{degree} rather than a binary architectural divide: convergence is continuous, with the degree of sharing predicted by training recipe similarity.
 
 %% ============================================================
 \section{Analysis}
@@ -321,7 +323,9 @@ Figure~\ref{fig:rdm_vs_r1} summarizes the relationship between representational 
 
 The 110-pair matrix reveals that a single property of the embedding space---\emph{similarity compression}---is the dominant predictor of RAT accuracy. We define sim\_mean as the mean pairwise cosine similarity among query embeddings: models with high sim\_mean map all inputs to a narrow angular cone, compressing the similarity distribution and leaving little room for relative profiles to discriminate between inputs.
 
-Figure~\ref{fig:compression} plots max(sim\_mean$_Q$, sim\_mean$_{DB}$)---the more compressed model in each pair---against Recall@1. Among text-only model pairs (excluding CLIP), the Spearman rank correlation is $\rho = -0.62$ ($p < 10^{-10}$). This single variable explains the broad structure of the heatmap: pairs involving low-compression models (MiniLM, MPNet; sim\_mean $\approx 0.03$) consistently achieve $>$80\%, while pairs involving high-compression models (E5, GTE; sim\_mean $> 0.69$) degrade to 37--70\% unless paired with a low-compression partner.
+Figure~\ref{fig:compression} plots max(sim\_mean$_Q$, sim\_mean$_{DB}$)---the more compressed model in each pair---against Recall@1. Among the 110 BERT-family pairs (excluding CLIP), the Spearman rank correlation is $\rho = -0.62$ ($p < 10^{-10}$). This single variable explains the broad structure of the heatmap: pairs involving low-compression models (MiniLM, MPNet; sim\_mean $\approx 0.03$) consistently achieve $>$80\%, while pairs involving high-compression models (E5, GTE; sim\_mean $> 0.69$) degrade to 37--70\% unless paired with a low-compression partner.
+
+\textbf{Extending to 272 pairs.} When all 17 models are included (\S\ref{sec:newgen}), the sim\_mean correlation weakens to $\rho = -0.477$ ($p < 10^{-16}$). This is expected: the 17-model set introduces wider variation in RDM correlation, which acts as an independent predictor ($\rho = 0.425$; Figure~\ref{fig:rdm_vs_r1}, right panel). Within sim\_mean bins, RDM correlation contributes additional explanatory power ($\rho = 0.34$--$0.49$; \S\ref{sec:twofactor}). The 11-model finding remains valid as a special case where RDM variation is limited.
 
 \begin{figure}[t]
   \centering
@@ -409,134 +413,28 @@ Figure~\ref{fig:buckets} provides further evidence. Partitioning query pairs int
 Notably, RAT also accesses structure that CLIP misses. Among the 125 queries in the lowest CLIP similarity quartile, 47 achieve Recall@5 via A$\times$E RAT; the reverse (CLIP-easy, RAT-hard) occurs in only 3 cases. RAT is not a degraded approximation of CLIP alignment but draws on partially distinct structure.
 
 %% ============================================================
-\section{The Cross-Cluster Wall}
-\label{sec:wall}
-%% ============================================================
-
-The cluster boundary discovered in \S\ref{sec:clusters} raises a natural question: can it be breached? We conduct a systematic investigation, testing zero-shot methods (\S\ref{sec:wall_zeroshot}), structural diagnostics (\S\ref{sec:wall_diag}), and few-shot linear maps (\S\ref{sec:wall_fewshot}). The answer is unambiguous: \textbf{no current method---zero-shot or few-shot, parameter-free or learned---can translate across the cluster boundary.}
-
-\subsection{Zero-Shot Methods Fail Uniformly}
-\label{sec:wall_zeroshot}
-
-We test five zero-shot approaches on three cross-cluster pairs (A$\to$O, C$\to$P, A$\to$N) spanning same-dimension and cross-dimension conditions, plus one intra-cluster control (A$\to$B). Table~\ref{tab:wall_zeroshot} shows the results.
-
-\begin{table}[t]
-\centering
-\caption{Zero-shot cross-cluster translation: Recall@1 (\%) at best $K$. All cross-cluster results are indistinguishable from random (0.2\%). The control pair (A$\to$B, same cluster) confirms all methods function correctly.}
-\label{tab:wall_zeroshot}
-\small
-\begin{tabular}{@{}lcccc@{}}
-\toprule
- & \multicolumn{3}{c}{Cross-cluster} & Control \\
-Method & A$\to$O & C$\to$P & A$\to$N & A$\to$B \\
-\midrule
-Procrustes ($K{=}2000$)       & 0.0 & 0.0 & 0.5 & 97.8 \\
-Procrustes + PCA ($K{=}2000$) & --- & --- & 0.1 & 98.4 \\
-RAT poly ($K{=}500$)          & 0.1 & 0.1 & 0.1 & 79.0 \\
-RAT RBF ($K{=}500$)           & 0.1 & 0.1 & 0.1 & 79.1 \\
-RAT poly ($K{=}2000$)         & 0.0 & 0.2 & 0.2 & 74.6 \\
-Random baseline               & 0.2 & 0.2 & 0.2 & 0.2 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Procrustes with up to 2,000 anchor pairs---where both the source and target embeddings of each anchor text are known---achieves 0\% on cross-cluster pairs while reaching 98\% on the control. Varying the number of anchors from 50 to 2,000, changing the kernel (polynomial, RBF, cosine), and applying PCA for dimension reduction all produce the same result: random-level performance. The wall is impervious to zero-shot methods regardless of anchor budget or algorithmic choice.
-
-\subsection{No Shared Structure at Any Level}
-\label{sec:wall_diag}
-
-The zero-shot failure could stem from (a)~a global structural mismatch that masks residual local or cluster-level agreement, or (b)~a fundamental absence of shared structure at every granularity. To distinguish these, we compute two diagnostic measures on the same cross-cluster pairs.
-
-\textbf{Mutual $k$-NN overlap.} For each text in the shared corpus ($N{=}2{,}500$), we compute its $k$ nearest neighbors in both the source and target embedding spaces and measure the fraction of shared neighbors. If local neighborhoods are preserved across spaces---even when global distance rankings are not---this overlap will exceed the random baseline of $k/(N{-}1)$.
-
-\textbf{Cluster agreement.} We independently cluster each space using $k$-means and measure the Adjusted Rand Index (ARI) between the two clusterings. ARI = 0 indicates random agreement; ARI = 1 indicates perfect correspondence.
-
-\begin{table}[t]
-\centering
-\caption{Structural diagnostics: cross-cluster pairs share no structure at any granularity. $k$-NN overlap ratio: observed overlap divided by random expectation (1.0$\times$ = random). ARI: Adjusted Rand Index of independent $k$-means clusterings.}
-\label{tab:wall_diag}
-\small
-\begin{tabular}{@{}l cccc | cccc@{}}
-\toprule
- & \multicolumn{4}{c|}{$k$-NN overlap ratio} & \multicolumn{4}{c}{ARI ($k$-means)} \\
-Pair & $k{=}5$ & $k{=}10$ & $k{=}50$ & $k{=}100$ & 10 & 20 & 50 & 100 \\
-\midrule
-A$\to$O (cross) & 0.9 & 0.9 & 1.0 & 1.0 & .000 & $-$.001 & .000 & .000 \\
-C$\to$P (cross) & 1.0 & 0.9 & 1.0 & 1.0 & .001 & .000 & .000 & $-$.001 \\
-A$\to$N (cross) & 1.0 & 0.9 & 1.0 & 1.0 & .001 & .001 & .001 & .000 \\
-\midrule
-A$\to$B (control) & \textbf{209} & \textbf{107} & \textbf{22} & \textbf{12} & \textbf{.284} & \textbf{.301} & \textbf{.247} & \textbf{.212} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Table~\ref{tab:wall_diag} is unambiguous. Cross-cluster $k$-NN overlap is exactly 1.0$\times$ the random expectation at every neighborhood size tested---knowing a text's nearest neighbors in one space provides \emph{zero} information about its neighbors in the other. ARI is indistinguishable from zero at all cluster granularities. In contrast, the same-cluster control pair shows 209$\times$ random overlap at $k{=}5$ and ARI $>$ 0.2.
-
-These diagnostics rule out the ``hidden local structure'' hypothesis. The two representational families share no structure at the global level (RDM $\rho \approx 0$, \S\ref{sec:clusters}), the local level ($k$-NN overlap $\approx$ random), or the cluster level (ARI $\approx 0$). Any method whose input is distance or similarity information---including Gromov-Wasserstein optimal transport \citep{alvarez2018gromov} and QAP-based blind matching \citep{schnaus2025blind}---faces the same absence of signal.
-
-\subsection{Few-Shot Linear Maps Cannot Bridge the Gap}
-\label{sec:wall_fewshot}
-
-If zero-shot fails because there is no structure to preserve, perhaps supervised learning can \emph{create} a mapping. We test few-shot Ridge regression (unconstrained linear map, $W^* = \arg\min \|XW - Y\|^2 + \lambda\|W\|^2$) and Procrustes alignment (orthogonal constraint, $W^\top W = I$), using $n \in \{1, 2, 5, 10, 20, 50, 100, 200\}$ labeled query pairs. Training pairs are excluded from evaluation to prevent information leakage. Regularization $\lambda$ is selected by cross-validation (RidgeCV).
-
-\begin{table}[t]
-\centering
-\caption{Few-shot cross-cluster translation: Recall@1 (\%) with training pairs excluded from evaluation. Cross-cluster pairs remain at random regardless of method or sample size. The control pair shows a smooth learning curve with Procrustes dominating Ridge.}
-\label{tab:wall_fewshot}
-\small
-\begin{tabular}{@{}r cc|cc|cc|cc@{}}
-\toprule
- & \multicolumn{2}{c|}{A$\to$O (cross)} & \multicolumn{2}{c|}{A$\to$N (cross)} & \multicolumn{2}{c|}{C$\to$P (cross)} & \multicolumn{2}{c}{A$\to$B (control)} \\
-$n$ & Ridge & Proc & Ridge & Proc & Ridge & Proc & Ridge & Proc \\
-\midrule
-5    & 0.2 & 0.0 & 0.3 & 0.2 & 0.3 & 0.2 & 1.4 & 1.1 \\
-10   & 0.2 & 0.1 & 0.1 & 0.1 & 0.2 & 0.4 & 3.0 & 2.9 \\
-50   & 0.1 & 0.3 & 0.4 & 0.1 & 0.1 & 0.3 & 23.6 & 26.8 \\
-100  & 0.1 & 0.2 & 0.3 & 0.2 & 0.2 & 0.3 & 47.4 & 63.7 \\
-200  & 0.2 & 0.0 & 0.2 & 0.4 & 0.3 & 0.3 & 66.7 & \textbf{87.1} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Table~\ref{tab:wall_fewshot} shows that \textbf{even 200 labeled pairs produce zero improvement on cross-cluster translation}. Both Ridge and Procrustes remain at random ($\approx$0.2\%) across all three cross-cluster pairs and all sample sizes. The learned transformation fits the training pairs (by construction) but fails to generalize to held-out queries. Two factors make generalization impossible in this regime. First, the system is heavily underdetermined: a $384 \to 384$ linear map has $384^2 \approx 148$K free parameters, while 200 pairs provide only $200 \times 384 \approx 77$K constraints---regularization fills the gap, but only if nearby inputs should map to nearby outputs. Second, the diagnostic results (\S\ref{sec:wall_diag}) show this continuity assumption is violated: $k$-NN overlap at random level means nearby points in source space map to unrelated locations in target space. Neither adding more parameters (Ridge vs.\ Procrustes) nor more data (1 to 200 pairs) addresses this fundamental discontinuity.
-
-\subsection{Within-Cluster: Procrustes as a Complement to RAT}
-\label{sec:wall_positive}
-
-The control pair (A$\to$B) reveals a positive finding. With 200 labeled pairs, Procrustes achieves \textbf{87.1\% R@1}---substantially above zero-shot RAT's 79.0\% on the same pair. Ridge reaches only 66.7\% under the same conditions, demonstrating that the orthogonal constraint acts as effective regularization, not a limitation, in the data-scarce regime. Comparing with the D1 comparison (\S\ref{sec:alignment}), where Procrustes achieves 79.9\% at $K{=}500$, the few-shot setup here uses query pairs rather than anchor pairs, operating in a different regime.
-
-This establishes a practical complementarity within each cluster: \textbf{RAT provides a strong zero-shot baseline; adding even modest supervision via Procrustes yields further gains.} The training recipe determines whether translation is \emph{possible}; the available supervision determines how \emph{accurate} it can be.
-
-%% ============================================================
-\section{A Three-Layer Diagnostic Model}
+\section{Diagnostic Model: Predicting Translation Accuracy}
 \label{sec:diagnostic}
 %% ============================================================
 
-The preceding experiments reveal that embedding space translation accuracy is governed by a hierarchy of factors operating at different scales. We synthesize these findings into a three-layer diagnostic model that predicts---from anchor embeddings alone---whether translation is feasible and what accuracy to expect.
+The preceding experiments reveal that embedding space translation accuracy is governed by two continuous factors operating independently. We synthesize these findings into a two-factor diagnostic model that predicts---from anchor embeddings alone---what accuracy to expect.
 
-\subsection{Layer 1: RDM Correlation as Gatekeeper}
-\label{sec:layer1}
+\subsection{RDM Correlation as a Continuous Predictor}
+\label{sec:rdm_predictor}
 
-RDM correlation determines whether translation is \emph{possible}. When $\rho \approx 0$, no method succeeds: not zero-shot RAT (\S\ref{sec:wall_zeroshot}), not Procrustes or Ridge with 2,000 anchor pairs, not few-shot learning with 200 labeled pairs (\S\ref{sec:wall_fewshot}), and---as the structural diagnostics show (\S\ref{sec:wall_diag})---not any method that depends on distance or neighborhood structure.
+RDM correlation between model pairs predicts RAT accuracy as a \emph{continuous} variable (Spearman $\rho = 0.425$, $p < 10^{-13}$; \S\ref{sec:twofactor}). Mean R@1 rises monotonically with RDM $\rho$: from 27.6\% ($\rho \in [0, 0.2)$, $N{=}26$ pairs) through 42.3\% ($\rho \in [0.2, 0.4)$, $N{=}110$) and 58.7\% ($\rho \in [0.4, 0.6)$, $N{=}106$) to 86.9\% ($\rho \in [0.8, 1.0)$, $N{=}6$). No binary threshold separates ``translatable'' from ``untranslatable'' pairs; instead, RDM $\rho$ sets a continuous upper bound on expected accuracy.
 
-This gatekeeper is binary in practice. Among 272 directed pairs in our 17-model evaluation, every pair with RDM $\rho < 0.1$ achieves R@1 $< 1\%$ regardless of method and anchor budget. Every pair with $\rho > 0.2$ achieves R@1 $> 10\%$ with at least one method. No pair falls in between. The threshold is computable from anchor embeddings of both models on a shared text set (seconds on CPU).
+\subsection{Similarity Compression as an Independent Factor}
+\label{sec:compression_factor}
 
-\subsection{Layer 2: Similarity Compression Governs Accuracy Range}
-\label{sec:layer2}
+Conditional on RDM $\rho$, similarity compression (sim\_mean) explains additional variance (Spearman $\rho = -0.477$, $p < 10^{-16}$). Within each RDM bin, the compression effect persists ($\rho = 0.34$--$0.49$; \S\ref{sec:twofactor}). Among the 110 BERT-family pairs where RDM variation is limited, sim\_mean alone achieves $\rho = -0.62$ (\S\ref{sec:collapse}).
 
-Conditional on passing the RDM gate ($\rho > 0.1$), the dominant predictor of translation accuracy is similarity compression (sim\_mean), as established in \S\ref{sec:collapse}. Among BERT-family pairs (110 directed), the Spearman correlation between max(sim\_mean) and RAT R@1 is $\rho = -0.62$ ($p < 10^{-10}$). Hierarchical regression on all intra-cluster pairs shows sim\_mean and RDM contribute comparably to explained variance (each $R^2 \approx 0.25$ individually; $R^2 = 0.57$ jointly), confirming that neither subsumes the other within compatible clusters.
+Sim\_mean also determines method selection: it governs when z-score normalization helps ($\rho = -0.59$ with z-score effect, \S\ref{sec:asymmetric}), which direction of RAT is better (\S\ref{sec:asymmetry}), and the $K$ crossover between RAT and linear methods.
 
-Sim\_mean also determines method selection. It governs when z-score normalization helps ($\rho = -0.59$ with z-score effect, \S\ref{sec:asymmetric}), which direction of RAT is better (\S\ref{sec:asymmetry}), and the K crossover between RAT and linear methods (weak correlation with sim\_mean, $\rho = -0.46$, $p = 0.06$; no correlation with RDM, $\rho = 0.14$, $p = 0.59$).
-
-\subsection{Layer 3: Structural Factors}
-\label{sec:layer3}
-
-After accounting for RDM gatekeeper and sim\_mean, residual variance is explained by three structural factors: (1)~same-family pairs gain $+$9 percentage points after controlling for compression (\S\ref{sec:collapse}); (2)~dimension mismatch amplifies directional asymmetry (mean $|\Delta| = 18$ pp for cross-dimension vs.\ 2.6 pp for same-dimension pairs, \S\ref{sec:asymmetry}); and (3)~within-cluster RDM provides fine-grained prediction (partial correlation $\rho = 0.80$, $p < 10^{-40}$ after controlling for sim\_mean).
-
-\subsection{Practical Decision Flowchart}
+\subsection{Practical Decision Protocol}
 \label{sec:flowchart}
 
-The three-layer model yields a concrete protocol for deploying embedding translation (Figure~\ref{fig:flowchart}):
+The two-factor model yields a concrete protocol for deploying embedding translation (Figure~\ref{fig:flowchart}):
 
 \begin{figure}[t]
 \centering
@@ -544,20 +442,20 @@ The three-layer model yields a concrete protocol for deploying embedding transla
 \fbox{\parbox{0.92\columnwidth}{%
 \textbf{Embedding Translation Decision Protocol}\\[4pt]
 \textbf{Input:} Models $X$, $Y$; shared anchor texts $\mathcal{A}$ ($K \ge 200$).\\[4pt]
-\textbf{Step 1: Feasibility check} (Layer 1)\\
+\textbf{Step 1: Accuracy estimation}\\
 \quad Compute RDM correlation $\rho$ from anchor embeddings.\\
-\quad If $\rho < 0.1$: \textsc{Translation Not Feasible}.\\
-\quad\quad $\to$ Re-embed with a single model, or accept incompatibility.\\[3pt]
-\textbf{Step 2: Method selection} (Layers 2--3)\\
+\quad Lower $\rho$ $\to$ lower expected R@1 (see Figure~\ref{fig:rdm_vs_r1}).\\
+\quad If expected accuracy is insufficient: re-embed with a single model.\\[3pt]
+\textbf{Step 2: Method selection}\\
 \quad Compute sim\_mean for both models from anchors.\\
-\quad If labeled pairs available ($n \ge 50$): use \textbf{Procrustes} (\S\ref{sec:wall_positive}).\\
+\quad If labeled pairs available ($n \ge 50$): use \textbf{Procrustes}.\\
 \quad Else if $K \ge 200$ anchors: use \textbf{Ridge/Affine} (\S\ref{sec:alignment}).\\
 \quad Else ($K < 50$): use \textbf{RAT} with FPS in lower sim\_mean space.\\[3pt]
 \textbf{Step 3: Normalization}\\
 \quad If DB-side sim\_mean $< 0.65$: apply z-score to DB relative repr.\\
 \quad Else: skip z-score.
 }}
-\caption{Practical decision protocol derived from the three-layer diagnostic model. All inputs are computable from anchor embeddings on CPU.}
+\caption{Practical decision protocol derived from the two-factor diagnostic model. All inputs are computable from anchor embeddings on CPU.}
 \label{fig:flowchart}
 \end{figure}
 
@@ -589,7 +487,7 @@ Organizations with databases built using different models can search them jointl
 \label{sec:alignment}
 %% ============================================================
 
-RAT requires no learned parameters---but is this an advantage or a limitation?  When paired anchor embeddings are available, one can fit a linear transformation directly.  We systematically compare RAT against three direct alignment methods across all 132 directed model pairs, varying the number of anchor pairs from 10 to 500.
+RAT requires no learned parameters---but is this an advantage or a limitation?  When paired anchor embeddings are available, one can fit a linear transformation directly.  We systematically compare RAT against three direct alignment methods.  The core comparison uses 132 directed pairs within the 11-model BERT-family subset (\S\ref{sec:matrix}); we then extend to all 272 directed pairs across 17 models.
 
 \subsection{Setup}
 
@@ -600,7 +498,7 @@ We compare four methods, all using the same FPS-selected anchor pairs:
   \item \textbf{Ridge Regression}: $W^* = (A^\top A + \lambda I)^{-1} A^\top B$, with $\lambda$ selected per pair from $\{10^{-4}, 10^{-2}, 1, 100\}$ by Recall@1 on the test set.  This oracle $\lambda$ selection represents an \emph{upper bound} on Ridge performance; in practice, $\lambda$ selection requires a held-out validation set, and the optimal $\lambda$ shifts with $K$ (e.g., $10^{-4}$ at $K{=}50$ vs.\ $1.0$ at $K{=}500$), adding tuning overhead that RAT avoids entirely.
   \item \textbf{Affine}: Ridge with a bias term.
 \end{itemize}
-All methods use anchor pairs for fitting (or RAT encoding) and are evaluated on 500 held-out queries.  Anchor counts $K \in \{10, 25, 50, 100, 200, 500\}$ span the range from extremely data-scarce to abundant.  Three FPS seeds confirm stability (mean std $< 0.6$ percentage points).
+All methods use anchor pairs for fitting (or RAT encoding) and are evaluated on 500 held-out queries.  Anchor counts $K \in \{10, 25, 50, 100, 200, 500\}$ span the range from extremely data-scarce to abundant.  Three FPS seeds confirm stability (mean std $< 0.9$ percentage points).
 
 \subsection{Main Results: The Crossover at $K \approx 100$}
 
@@ -608,18 +506,25 @@ Table~\ref{tab:d1_main} and Figure~\ref{fig:d1_r1_vs_k} reveal a clear crossover
 
 \begin{table}[t]
 \centering
-\caption{Mean Recall@1 (\%) across model pairs by anchor count $K$. RAT and Ridge/Affine: $N{=}132$ directed pairs. Procrustes: $N{=}32$ (same-dimension only). RAT$_\text{auto}$: $N{=}66$ undirected pairs, each selecting the better of two directions (oracle; see \S\ref{sec:asymmetry}). Ridge/Affine $\lambda$ selected per pair by test-set Recall@1 (oracle upper bound).}
+\caption{Mean Recall@1 (\%) across model pairs by anchor count $K$. Top block: 11-model BERT-family subset (132 directed pairs). Bottom block: all 17 models (272 directed pairs). Procrustes: same-dimension only. Ridge/Affine $\lambda$ selected per pair by test-set R@1 (oracle upper bound).}
 \label{tab:d1_main}
 \small
 \begin{tabular}{@{}lrcccccc@{}}
 \toprule
 Method & $N$ & $K{=}10$ & $K{=}25$ & $K{=}50$ & $K{=}100$ & $K{=}200$ & $K{=}500$ \\
 \midrule
+\multicolumn{8}{@{}l@{}}{\emph{11-model subset (A--K)}} \\
 RAT                 & 132 & \textbf{5.9}  & \textbf{19.0} & \textbf{30.4} & 37.5 & 42.7 & 46.0 \\
 RAT$_\text{auto}$   &  66 & \textbf{7.4}  & \textbf{22.7} & \textbf{38.7} & \textbf{51.2} & 58.5 & 61.8 \\
 Procrustes          &  32 & 2.1  & 7.8  & 23.0 & 51.1 & 70.6 & 79.9 \\
 Ridge               & 132 & 2.2  & 8.5  & 23.2 & 45.6 & 62.4 & 72.9 \\
 Affine              & 132 & 1.8  & 7.5  & 22.2 & 45.8 & 63.2 & 73.1 \\
+\midrule
+\multicolumn{8}{@{}l@{}}{\emph{All 17 models}} \\
+RAT                 & 272 & \textbf{4.6}  & \textbf{15.4} & \textbf{27.4} & 37.8 & 46.3 & 50.6 \\
+Procrustes          &  66 & 1.8  & 6.8  & 20.8 & 49.3 & 74.8 & 89.0 \\
+Ridge               & 272 & 1.9  & 6.8  & 19.8 & 44.2 & 67.7 & 85.0 \\
+Affine              & 272 & 1.7  & 6.3  & 19.5 & 44.6 & 68.4 & 85.2 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -633,6 +538,8 @@ Affine              & 132 & 1.8  & 7.5  & 22.2 & 45.8 & 63.2 & 73.1 \\
 
 At $K{=}50$, RAT$_\text{auto}$ wins 74\% of pairs (mean $\Delta{=}{+}12.0$ pp over the best linear method).  At $K{=}500$, the relationship reverses: Ridge/Affine achieve 73\% mean Recall@1 vs.\ RAT's 46\%, winning 90\% of pairs.  The crossover at $K \approx 100$ marks where the linear methods accumulate enough training samples to outperform RAT's parameter-free approach.
 
+\textbf{Extension to 272 pairs.}  The crossover pattern is robust to the 17-model expansion (Table~\ref{tab:d1_main}, bottom block).  Among all 272 pairs, RAT wins 74\% at $K{=}50$ (mean $\Delta{=}{+}6.7$ pp) but only 3\% at $K{=}500$ (mean $\Delta{=}-35.3$ pp).  The crossover remains at $K \approx 100$ (39\% RAT win rate).  Notably, linear methods achieve non-trivial accuracy even on low-RDM pairs: at $K{=}500$, Ridge achieves $\ge$33\% on all 272 pairs, including those with RDM $\rho < 0.2$.  This contrasts with RAT, where low-RDM pairs with high query-side compression achieve $<$1\%.  The advantage of linear methods at high $K$ is \emph{amplified} by the inclusion of diverse model pairs.
+
 The asymmetry is structural: RAT projects into a $K$-dimensional space where $K$ is both the representation dimensionality \emph{and} the information budget; linear methods project into the target model's $d$-dimensional space, using $K$ anchors only as training samples.  At low $K$, the linear methods are underdetermined ($K < d$), while RAT's $K$-dimensional representation is well-conditioned by construction.  At high $K$, the linear methods converge toward a near-optimal mapping, while RAT's representation accumulates redundant anchors that dilute discriminability (confirmed by scaling experiments showing performance \emph{declining} at $K{=}2000$ for representative pairs).
 
 \textbf{Hyperparameter dependence.}  Ridge and Affine require selecting $\lambda$, whose optimal value shifts with $K$ (e.g., $\lambda{=}10^{-4}$ at $K{=}50$ vs.\ $\lambda{=}1.0$ at $K{=}500$).  RAT has no such hyperparameter.
@@ -642,7 +549,7 @@ The asymmetry is structural: RAT projects into a $K$-dimensional space where $K$
 \subsection{Directional Asymmetry}
 \label{sec:asymmetry}
 
-RAT exhibits pronounced directional asymmetry: the same model pair can yield vastly different accuracy depending on which model's space is used for FPS anchor selection (mean asymmetry = 31.6 pp, max = 95.0 pp at $K{=}500$).  Linear methods show much smaller asymmetry (Ridge: 6.4 pp, Affine: 6.1 pp), because the learned transformation is approximately direction-agnostic.
+RAT exhibits pronounced directional asymmetry: the same model pair can yield vastly different accuracy depending on which model's space is used for FPS anchor selection (mean asymmetry = 27.8 pp, max = 96.8 pp at $K{=}500$ across 136 undirected pairs).  Linear methods show much smaller asymmetry (Procrustes: 15.5 pp across 33 same-dimension pairs), because the learned transformation is approximately direction-agnostic.
 
 \begin{figure}[t]
   \centering
@@ -678,29 +585,29 @@ The comparison yields concrete deployment advice:
 
 \textbf{Relative Representations.} \citet{moschella2023relative} introduced the framework of encoding data points as similarity vectors to shared anchors, demonstrating zero-shot model stitching. \citet{garcia2024geometric} propose geometric improvements---anisotropic scaling invariance and topological densification---that improve zero-shot stitching on NLP tasks.  RAT operates within this framework: the core idea is theirs. Our contributions are (1)~showing that anchor selection matters critically (FPS achieves with 100 anchors what random requires 1,000), (2)~identifying similarity collapse as a previously uncharacterized failure mode and resolving it with adaptive z-score (a normalization approach complementary to the geometric corrections of \citealt{garcia2024geometric}), and (3)~extending to cross-modal retrieval via paired anchors.
 
-\textbf{Platonic Representation Hypothesis.} \citet{huh2024platonic} hypothesize that models trained on sufficient data converge toward shared representations. Our finding that models with zero direct correlation share relative structure (B$\times$E: 55\%) provides empirical support within the BERT-family cluster. However, extending to 17 models (\S\ref{sec:newgen}) reveals a cluster boundary (RDM $\rho \approx 0$) that suggests convergence occurs \emph{within} training paradigms but not yet across them, even at 335M parameters (\S\ref{sec:scale}). RAT's cross-model Recall@1 offers a quantitative operationalization of convergence degree, computable from black-box model access alone.
+\textbf{Platonic Representation Hypothesis.} \citet{huh2024platonic} hypothesize that models trained on sufficient data converge toward shared representations. Our 17-model evaluation (\S\ref{sec:newgen}) provides quantitative support: all model pairs share representational structure to varying degrees (RDM $\rho \in [0.04, 0.87]$), with the degree of sharing predicted by training recipe similarity rather than architecture or scale. This is consistent with convergence as a \emph{continuous} phenomenon rather than a binary divide. RAT's cross-model Recall@1 offers a quantitative operationalization of convergence degree, computable from black-box model access alone.
 
 \textbf{Model Stitching and Alignment.} \citet{bansal2021revisiting} train affine stitching layers; \citet{merullo2022linearly} learn linear projections for vision-language bridging; Procrustes alignment \citep{conneau2018word} fits orthogonal maps. \citet{lahner2024direct} systematically compare anchor-based relative representations against direct linear/affine alignment, finding that linear transformations often suffice with enough correspondences. Our comparison (\S\ref{sec:alignment}) extends this analysis to 132 directed pairs across 11 models, identifying a crossover at $K \approx 100$ anchors and characterizing the conditions under which each approach excels.
 
-\textbf{Unsupervised Alignment and Structural Matching.} Gromov-Wasserstein optimal transport \citep{alvarez2018gromov} aligns spaces without parallel data by matching intra-domain distance matrices. \citet{schnaus2025blind} achieve blind matching of vision-language embeddings via QAP on pairwise distances, demonstrating that structural matching can succeed when representations share local distance patterns. Our diagnostic results (\S\ref{sec:wall_diag}) show that these approaches face the same limitation as RAT when the underlying distance structures are uncorrelated: mutual $k$-NN overlap at random level implies no signal for any distance-based method.
+\textbf{Unsupervised Alignment and Structural Matching.} Gromov-Wasserstein optimal transport \citep{alvarez2018gromov} aligns spaces without parallel data by matching intra-domain distance matrices. \citet{schnaus2025blind} achieve blind matching of vision-language embeddings via QAP on pairwise distances, demonstrating that structural matching can succeed when representations share local distance patterns. Our two-factor model (\S\ref{sec:diagnostic}) suggests that these methods should benefit from higher RDM correlation between source and target models, providing a practical compatibility check.
 
 %% ============================================================
 \section{Limitations}
 \label{sec:limitations}
 %% ============================================================
 
-\textbf{Evaluation scale.} All experiments use 500 queries from English-language datasets. Evaluation on larger benchmarks (e.g., MTEB) and multilingual settings is needed. \textbf{Cross-modal ceiling.} Recall@1 of 21.2\% is a proof of concept, not a practical system; the gap to CLIP's native accuracy (59\%) indicates fundamental limits of zero-shot cross-modal translation. \textbf{RAT scaling ceiling.} RAT performance peaks at $K \approx 200$--500 for text-to-text and degrades beyond: on representative pairs, $K{=}2000$ reduces Recall@1 by 1.6--4.4 pp compared to $K{=}500$.  In contrast, Ridge continues improving monotonically with $K$.  The likely mechanism is noise accumulation in high-$K$ cosine similarity, where redundant anchors dilute the discriminative signal.  For cross-modal retrieval, this effect is more pronounced: at $K{=}3000$, matched text-image pairs have mean RAT cosine similarity of 0.983 vs.\ 0.981 for unmatched pairs---a margin of only 0.002, explaining the peak at $K{=}3000$ and decline at $K{=}4000$ (Table~\ref{tab:crossmodal}). \textbf{Polynomial kernel DC bias.} The kernel $\kappa(u,v) = (u^\top v + 1)^2$ introduces a large constant offset when sim\_mean is high: at sim\_mean = 0.5, the mean output is $(0.5 + 1)^2 = 2.25$ with typical variation of $\pm$0.15, yielding a signal-to-offset ratio of 15:1. One model (Nomic-embed-text-v1.5) produced pairwise cosine similarity of 0.997 in relative representation space, making retrieval impossible. Centering the kernel or applying per-vector z-score resolves this, but the current protocol does not detect or correct it automatically. \textbf{Compression--family confound.} Same\_family and same\_training are perfectly collinear in our 11-model set; separating the contributions of shared training data, architecture, and objective requires controlled experiments (e.g., same data with different objectives) that our model selection does not permit. \textbf{Representational cluster boundary.} Extending to 17 models reveals that BERT-family encoders and newer models (Nomic, GTE-Qwen2, Arctic) share zero RDM correlation at every structural level (\S\ref{sec:wall}). Neither zero-shot methods, few-shot linear maps (up to 200 labeled pairs), nor structural matching approaches can bridge this gap. Scaling parameters 15$\times$ within a training recipe does not move cross-cluster RDM (\S\ref{sec:scale}). Whether this boundary dissolves at much larger scale ($>$1B parameters with diverse training) or requires fundamentally different approaches (e.g., nonlinear maps with large paired datasets) remains open. \textbf{Few-shot evaluation.} Our few-shot experiments use up to 200 labeled pairs; we have not tested regimes with thousands of pairs, where nonlinear methods might succeed. \textbf{Theory.} We provide no formal proof of why relative profiles align; sufficient conditions remain open.
+\textbf{Evaluation scale.} All experiments use 500 queries from English-language datasets. Evaluation on larger benchmarks (e.g., MTEB) and multilingual settings is needed. \textbf{Cross-modal ceiling.} Recall@1 of 21.2\% is a proof of concept, not a practical system; the gap to CLIP's native accuracy (59\%) indicates fundamental limits of zero-shot cross-modal translation. \textbf{RAT scaling ceiling.} RAT performance peaks at $K \approx 200$--500 for text-to-text and degrades beyond: on representative pairs, $K{=}2000$ reduces Recall@1 by 1.6--4.4 pp compared to $K{=}500$.  In contrast, Ridge continues improving monotonically with $K$.  The likely mechanism is noise accumulation in high-$K$ cosine similarity, where redundant anchors dilute the discriminative signal.  For cross-modal retrieval, this effect is more pronounced: at $K{=}3000$, matched text-image pairs have mean RAT cosine similarity of 0.983 vs.\ 0.981 for unmatched pairs---a margin of only 0.002, explaining the peak at $K{=}3000$ and decline at $K{=}4000$ (Table~\ref{tab:crossmodal}). \textbf{Polynomial kernel DC bias.} The kernel $\kappa(u,v) = (u^\top v + 1)^2$ introduces a large constant offset when sim\_mean is high: at sim\_mean = 0.5, the mean output is $(0.5 + 1)^2 = 2.25$ with typical variation of $\pm$0.15, yielding a signal-to-offset ratio of 15:1. For high-compression models, relative representations can have pairwise cosine similarity $>$0.99, making retrieval impossible. Centering the kernel or applying per-vector z-score resolves this, but the current protocol does not detect or correct it automatically. \textbf{Compression--family confound.} Same\_family and same\_training are perfectly collinear in our 11-model set; separating the contributions of shared training data, architecture, and objective requires controlled experiments (e.g., same data with different objectives) that our model selection does not permit. \textbf{Low-RDM pairs.} While no binary ``wall'' exists, pairs with low RDM correlation ($\rho < 0.2$) achieve mean R@1 of only 28\%. Whether nonlinear methods or larger paired datasets can improve on this remains open. \textbf{Data integrity.} An earlier version (v3) reported a representational cluster boundary that was traced to a data alignment error (Appendix~\ref{app:correction}). The corrected analysis shows continuous variation with no hard boundary. This experience motivates embedding integrity checks (hash verification, sanity re-embedding) as standard practice. \textbf{Theory.} We provide no formal proof of why relative profiles align; sufficient conditions remain open.
 
 %% ============================================================
 \section{Conclusion}
 \label{sec:conclusion}
 %% ============================================================
 
-RAT translates between embedding spaces without training via three composable steps (FPS + polynomial kernel + adaptive DB-side z-score), achieving Recall@1 from 13\% to 99\% across 110 directed pairs within compatible model families.
+RAT translates between embedding spaces without training via three composable steps (FPS + polynomial kernel + adaptive DB-side z-score), achieving Recall@1 from 0.2\% to 99.6\% across 272 directed pairs spanning 17 models from 9 families.
 
-Evaluating 17 models from 9 families---including BERT-family encoders, a decoder-based LLM, and a scale series spanning 22M to 335M parameters---we identify a three-layer hierarchy governing embedding translation. First, RDM correlation acts as a binary gatekeeper: models from different training paradigms share zero representational structure at every granularity (global distance rankings, local neighborhoods, cluster assignments), and no method---zero-shot, few-shot, or structural matching---can bridge this gap. This boundary is invariant to 15$\times$ parameter scaling within a training recipe. Second, within compatible clusters, similarity compression ($\rho = -0.62$) predicts accuracy and determines both normalization strategy and method selection. Third, family membership and dimensionality refine predictions.
+Evaluating models ranging from 22M-parameter BERT encoders to a 1.5B-parameter decoder-based LLM, we find that translation accuracy is governed by two continuous, independent factors: \textbf{RDM correlation} (Spearman $\rho = 0.425$ with R@1) captures the degree of shared representational structure between model pairs, while \textbf{similarity compression} ($\rho = -0.477$) captures the loss of discriminability in compressed embedding spaces. All 17 models share representational structure to varying degrees---no binary boundary separates ``translatable'' from ``untranslatable'' pairs. This supports the Platonic Representation Hypothesis as a matter of degree: convergence is continuous, with the extent predicted by training recipe similarity.
 
-This hierarchy yields a practical decision protocol: compute RDM correlation and sim\_mean from anchor embeddings to determine feasibility, select the optimal method (RAT for $K \le 50$; Ridge for $K \ge 200$; Procrustes with labeled pairs), and predict accuracy---all without retrieval evaluation. Three application scenarios demonstrate practical value: model upgrades retain 94\% accuracy at 0.05\% of re-indexing cost; lightweight query gateways achieve 98\% accuracy with 6$\times$ speedup; and multi-database unified search reaches Recall@5 = 96\%. The protocol is available as an open-source library (\texttt{pip install rat-embed}).
+This two-factor model yields a practical decision protocol: compute RDM correlation and sim\_mean from anchor embeddings to estimate expected accuracy, select the optimal method (RAT for $K \le 50$; Ridge for $K \ge 200$; Procrustes with labeled pairs), and configure normalization---all without retrieval evaluation. Three application scenarios demonstrate practical value: model upgrades retain 94\% accuracy at 0.05\% of re-indexing cost; lightweight query gateways achieve 98\% accuracy with 6$\times$ speedup; and multi-database unified search reaches Recall@5 = 96\%. The protocol is available as an open-source library (\texttt{pip install rat-embed}).
 
 %% ============================================================
 % References
@@ -846,6 +753,23 @@ Naive vstack fails because relative representations from different models have i
 \section{Reproducibility}
 \label{app:repro}
 
-All experiments run on CPU (Intel, WSL2). Software: Python 3.12, sentence-transformers $\geq$2.2, transformers $\geq$4.30, scikit-learn $\geq$1.3. Random seed = 42 for all experiments unless otherwise noted. Code: \url{https://github.com/jiro-prog/rat-experiment}. Library: \texttt{pip install rat-embed} (v0.3.0).
+All experiments run on CPU (Intel, WSL2). Software: Python 3.12, sentence-transformers 5.3.0, transformers 5.4.0, scikit-learn $\geq$1.3. Random seed = 42 for all experiments unless otherwise noted. Code: \url{https://github.com/jiro-prog/rat-experiment}. Library: \texttt{pip install rat-embed} (v0.3.0).
+
+\section{Data Correction Note}
+\label{app:correction}
+
+An earlier version of this paper (v3, Zenodo DOI: 10.5281/zenodo.19401276) reported a ``cross-cluster wall''---a hard representational boundary (RDM $\rho \approx 0$) between BERT-family encoders (models A--K) and newer models (L--Q). This finding was incorrect, caused by a data alignment error described below. All results in the current version (v4) use corrected data.
+
+\textbf{Root cause.} The embedding generation script (\texttt{run\_d2a\_embed\_all.py}) used Python's \texttt{set()} to collect unique sentences from the STS Benchmark dataset. \texttt{set()} iteration order is non-deterministic across Python sessions. The script was executed twice: the first run generated embeddings for models A--K with text ordering $T_1$; the second run regenerated \texttt{texts.json} with a different ordering $T_2$ (due to \texttt{set()} non-determinism), skipped A--K (whose embedding files already existed), and generated L--Q embeddings using $T_2$. The result: A--K embeddings corresponded to $T_1$ while L--Q corresponded to $T_2$, but the file-level correspondence was implicit---no integrity check detected the mismatch.
+
+\textbf{Detection.} The error was discovered during a follow-up CKA analysis (``Wall Diagnostics''). Re-embedding model A with the current library and comparing against the cached \texttt{cand\_A.npy} yielded cosine similarity $\approx 0.02$ (expected: 1.0). Systematic verification showed all A--K embeddings were inconsistent with \texttt{texts.json}, while L--Q matched perfectly. File timestamps confirmed the sequence: \texttt{cand\_A.npy} (19:32:04) through \texttt{cand\_K.npy} (19:36:11), then \texttt{texts.json} (19:36:35), then \texttt{cand\_L.npy} (19:37:35)---indicating \texttt{texts.json} was overwritten between the K and L embeddings.
+
+\textbf{Impact.} All cross-group comparisons (A--K vs.\ L--Q) in v3 were invalid: RDM $\rho \approx 0$, $k$-NN overlap at random, ARI $\approx 0$, and zero-shot/few-shot translation failures were artifacts of comparing embeddings of different texts. Within-group results (A--K internal, L--Q internal) were unaffected, as each group used consistent text ordering.
+
+\textbf{Correction.} All 17 models were re-embedded from a deterministic text list (\texttt{sorted(list(set(...)))}) in a single session with no file-skip logic. Verification: for each model, re-embedding \texttt{texts[0]} yielded cosine similarity $\geq 0.9995$ with \texttt{cand\_X[0]}. CKA analysis on corrected data confirms structural correspondence across all model pairs (linear CKA = 0.48--0.75 for former ``cross-cluster'' pairs, all $p < 0.001$).
+
+\textbf{Sections affected in v3.} \S4.6 (cluster discovery, scale invariance), \S6 (cross-cluster wall), \S7 (three-layer model Layer~1). These sections have been rewritten in v4. \S4.2--\S4.5 (110-pair analysis), \S5 (sim\_mean, z-score), \S4.4 (cross-modal), and \S9 (RAT vs.\ alignment, 132 pairs within A--K) were unaffected and are retained with minor updates.
+
+\textbf{Lessons.} (1)~Never iterate over \texttt{set()} when order matters; use \texttt{sorted()}. (2)~Cache-skip logic must verify data integrity (e.g., hash of input texts), not just file existence. (3)~Embed a sanity check at the end of every experiment pipeline: re-embed a few samples and verify cosine similarity $\approx 1.0$ against cached embeddings.
 
 \end{document}
