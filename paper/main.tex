@@ -494,7 +494,7 @@ RAT requires no learned parameters---but is this an advantage or a limitation?  
 We compare four methods, all using the same FPS-selected anchor pairs:
 \begin{itemize}
   \item \textbf{RAT}: polynomial kernel + adaptive z-score (our protocol).
-  \item \textbf{Orthogonal Procrustes}: $W^* = \arg\min \|AW - B\|^2$ s.t.\ $W^\top W = I$. Restricted to same-dimension pairs (32 of 132).
+  \item \textbf{Orthogonal Procrustes}: $W^* = \arg\min \|AW - B\|^2$ s.t.\ $W^\top W = I$. Restricted to same-dimension pairs (28 of 132).
   \item \textbf{Ridge Regression}: $W^* = (A^\top A + \lambda I)^{-1} A^\top B$, with $\lambda$ selected per pair from $\{10^{-4}, 10^{-2}, 1, 100\}$ by Recall@1 on the test set.  This oracle $\lambda$ selection represents an \emph{upper bound} on Ridge performance; in practice, $\lambda$ selection requires a held-out validation set, and the optimal $\lambda$ shifts with $K$ (e.g., $10^{-4}$ at $K{=}50$ vs.\ $1.0$ at $K{=}500$), adding tuning overhead that RAT avoids entirely.
   \item \textbf{Affine}: Ridge with a bias term.
 \end{itemize}
@@ -516,7 +516,7 @@ Method & $N$ & $K{=}10$ & $K{=}25$ & $K{=}50$ & $K{=}100$ & $K{=}200$ & $K{=}500
 \multicolumn{8}{@{}l@{}}{\emph{11-model subset (A--K)}} \\
 RAT                 & 132 & \textbf{5.9}  & \textbf{19.0} & \textbf{30.4} & 37.5 & 42.7 & 46.0 \\
 RAT$_\text{auto}$   &  66 & \textbf{7.4}  & \textbf{22.7} & \textbf{38.7} & \textbf{51.2} & 58.5 & 61.8 \\
-Procrustes          &  32 & 2.1  & 7.8  & 23.0 & 51.1 & 70.6 & 79.9 \\
+Procrustes          &  28 & 2.1  & 7.8  & 23.0 & 51.1 & 70.6 & 79.9 \\
 Ridge               & 132 & 2.2  & 8.5  & 23.2 & 45.6 & 62.4 & 72.9 \\
 Affine              & 132 & 1.8  & 7.5  & 22.2 & 45.8 & 63.2 & 73.1 \\
 \midrule
@@ -544,7 +544,7 @@ The asymmetry is structural: RAT projects into a $K$-dimensional space where $K$
 
 \textbf{Hyperparameter dependence.}  Ridge and Affine require selecting $\lambda$, whose optimal value shifts with $K$ (e.g., $\lambda{=}10^{-4}$ at $K{=}50$ vs.\ $\lambda{=}1.0$ at $K{=}500$).  RAT has no such hyperparameter.
 
-\textbf{Dimensionality constraint.}  Procrustes requires $d_X = d_Y$, limiting it to 32 of 132 pairs.  Ridge/Affine handle cross-dimension pairs but are particularly underdetermined when $K \ll d$ (e.g., $K{=}50$ anchors for a $384{\to}1024$ mapping).  RAT handles all pairs uniformly.
+\textbf{Dimensionality constraint.}  Procrustes requires $d_X = d_Y$, limiting it to 28 of 132 pairs.  Ridge/Affine handle cross-dimension pairs but are particularly underdetermined when $K \ll d$ (e.g., $K{=}50$ anchors for a $384{\to}1024$ mapping).  RAT handles all pairs uniformly.
 
 \subsection{Directional Asymmetry}
 \label{sec:asymmetry}
@@ -564,9 +564,9 @@ This motivates \textbf{bidirectional evaluation}: run FPS in both model spaces, 
 
 \subsection{Same-Dimension vs.\ Cross-Dimension Pairs}
 
-When dimensions match, linear methods have a structural advantage: Procrustes finds an exact orthogonal mapping within the shared dimensionality.  Among same-dimension pairs ($N{=}16$ undirected), RAT$_\text{auto}$ wins 81\% at $K{=}50$ but 0\% at $K{=}500$.
+When dimensions match, linear methods have a structural advantage: Procrustes finds an exact orthogonal mapping within the shared dimensionality.  Among same-dimension pairs ($N{=}14$ undirected), RAT$_\text{auto}$ wins 81\% at $K{=}50$ but 0\% at $K{=}500$.
 
-Among cross-dimension pairs ($N{=}50$ undirected), where Procrustes is inapplicable, RAT$_\text{auto}$ wins 72\% at $K{=}50$ (mean $\Delta{=}{+}12.0$ pp over Ridge/Affine) and retains a 12\% win rate even at $K{=}500$.  This is RAT's strongest structural advantage: it handles arbitrary dimension mismatches without modification, while Ridge/Affine must fit a rectangular $d_X \times d_Y$ mapping that is severely underdetermined at low $K$.
+Among cross-dimension pairs ($N{=}52$ undirected), where Procrustes is inapplicable, RAT$_\text{auto}$ wins 72\% at $K{=}50$ (mean $\Delta{=}{+}12.0$ pp over Ridge/Affine) and retains a 12\% win rate even at $K{=}500$.  This is RAT's strongest structural advantage: it handles arbitrary dimension mismatches without modification, while Ridge/Affine must fit a rectangular $d_X \times d_Y$ mapping that is severely underdetermined at low $K$.
 
 \subsection{Practical Guidelines}
 
@@ -768,7 +768,7 @@ An earlier version of this paper (v3, Zenodo DOI: 10.5281/zenodo.19401276) repor
 
 \textbf{Correction.} All 17 models were re-embedded from a deterministic text list (\texttt{sorted(list(set(...)))}) in a single session with no file-skip logic. Verification: for each model, re-embedding \texttt{texts[0]} yielded cosine similarity $\geq 0.9995$ with \texttt{cand\_X[0]}. CKA analysis on corrected data confirms structural correspondence across all model pairs (linear CKA = 0.48--0.75 for former ``cross-cluster'' pairs, all $p < 0.001$).
 
-\textbf{Sections affected in v3.} \S4.6 (cluster discovery, scale invariance), \S6 (cross-cluster wall), \S7 (three-layer model Layer~1). These sections have been rewritten in v4. \S4.2--\S4.5 (110-pair analysis), \S5 (sim\_mean, z-score), \S4.4 (cross-modal), and \S9 (RAT vs.\ alignment, 132 pairs within A--K) were unaffected and are retained with minor updates.
+\textbf{Sections affected in v3.} \S4.6 (cluster discovery, scale invariance), \S6 (cross-cluster wall), \S7 (three-layer model Layer~1). These sections have been rewritten in v4. \S4.2--\S4.5 (110-pair analysis), \S5 (sim\_mean, z-score), \S4.4 (cross-modal), and \S8 (RAT vs.\ alignment, 132 pairs within A--K) were unaffected and are retained with minor updates.
 
 \textbf{Lessons.} (1)~Never iterate over \texttt{set()} when order matters; use \texttt{sorted()}. (2)~Cache-skip logic must verify data integrity (e.g., hash of input texts), not just file existence. (3)~Embed a sanity check at the end of every experiment pipeline: re-embed a few samples and verify cosine similarity $\approx 1.0$ against cached embeddings.
 
