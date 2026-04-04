@@ -1,0 +1,323 @@
+{
+  "experiment": "scout_s1_diagnostics",
+  "description": "クロスクラスター間のローカル/クラスタ構造一致度診断",
+  "config": {
+    "knn_ks": [
+      5,
+      10,
+      20,
+      50,
+      100
+    ],
+    "kmeans_ks": [
+      10,
+      20,
+      50,
+      100
+    ],
+    "n_data_points": 2500
+  },
+  "results": [
+    {
+      "pair": "A→O",
+      "description": "MiniLM(384)→Arctic-xs(384)",
+      "pair_type": "cross_cluster",
+      "knn_overlap": {
+        "5": {
+          "mean": 0.00176,
+          "std": 0.01867892930550357,
+          "median": 0.0,
+          "p95": 0.0,
+          "p99": 0.0,
+          "max": 0.2,
+          "zero_frac": 0.9912,
+          "random_expected": 0.0020008003201280513
+        },
+        "10": {
+          "mean": 0.0036799999999999997,
+          "std": 0.01882704437770305,
+          "median": 0.0,
+          "p95": 0.0,
+          "p99": 0.1,
+          "max": 0.1,
+          "zero_frac": 0.9632,
+          "random_expected": 0.004001600640256103
+        },
+        "20": {
+          "mean": 0.007940000000000001,
+          "std": 0.019543704868831804,
+          "median": 0.0,
+          "p95": 0.05,
+          "p99": 0.05,
+          "max": 0.1,
+          "zero_frac": 0.8508,
+          "random_expected": 0.008003201280512205
+        },
+        "50": {
+          "mean": 0.020136,
+          "std": 0.019680993470859137,
+          "median": 0.02,
+          "p95": 0.06,
+          "p99": 0.08,
+          "max": 0.14,
+          "zero_frac": 0.358,
+          "random_expected": 0.02000800320128051
+        },
+        "100": {
+          "mean": 0.039612,
+          "std": 0.019486648146872256,
+          "median": 0.04,
+          "p95": 0.07,
+          "p99": 0.09,
+          "max": 0.13,
+          "zero_frac": 0.0172,
+          "random_expected": 0.04001600640256102
+        }
+      },
+      "cluster_agreement": {
+        "10": {
+          "adjusted_rand_index": 0.00030596510361493613,
+          "normalized_mutual_info": 0.008114591169503655
+        },
+        "20": {
+          "adjusted_rand_index": -0.0009620824026507561,
+          "normalized_mutual_info": 0.023157952023136977
+        },
+        "50": {
+          "adjusted_rand_index": -0.0001612049986315133,
+          "normalized_mutual_info": 0.13385511985701345
+        },
+        "100": {
+          "adjusted_rand_index": -1.1735627395580165e-06,
+          "normalized_mutual_info": 0.29349113246044856
+        }
+      }
+    },
+    {
+      "pair": "C→P",
+      "description": "BGE-s(384)→Arctic-s(384)",
+      "pair_type": "cross_cluster",
+      "knn_overlap": {
+        "5": {
+          "mean": 0.0019200000000000003,
+          "std": 0.019501630701046515,
+          "median": 0.0,
+          "p95": 0.0,
+          "p99": 0.0,
+          "max": 0.2,
+          "zero_frac": 0.9904,
+          "random_expected": 0.0020008003201280513
+        },
+        "10": {
+          "mean": 0.0037600000000000008,
+          "std": 0.019022681199031857,
+          "median": 0.0,
+          "p95": 0.0,
+          "p99": 0.1,
+          "max": 0.1,
+          "zero_frac": 0.9624,
+          "random_expected": 0.004001600640256103
+        },
+        "20": {
+          "mean": 0.00792,
+          "std": 0.01988148887784816,
+          "median": 0.0,
+          "p95": 0.05,
+          "p99": 0.1,
+          "max": 0.15,
+          "zero_frac": 0.8536,
+          "random_expected": 0.008003201280512205
+        },
+        "50": {
+          "mean": 0.019496,
+          "std": 0.01940479281002505,
+          "median": 0.02,
+          "p95": 0.06,
+          "p99": 0.08,
+          "max": 0.14,
+          "zero_frac": 0.3692,
+          "random_expected": 0.02000800320128051
+        },
+        "100": {
+          "mean": 0.039392,
+          "std": 0.019020786944813826,
+          "median": 0.04,
+          "p95": 0.07,
+          "p99": 0.09,
+          "max": 0.14,
+          "zero_frac": 0.0156,
+          "random_expected": 0.04001600640256102
+        }
+      },
+      "cluster_agreement": {
+        "10": {
+          "adjusted_rand_index": 0.0007908204634226564,
+          "normalized_mutual_info": 0.009340174799867181
+        },
+        "20": {
+          "adjusted_rand_index": -0.00012789945907018375,
+          "normalized_mutual_info": 0.02530930046185139
+        },
+        "50": {
+          "adjusted_rand_index": -0.00040527162314670857,
+          "normalized_mutual_info": 0.1338981979787797
+        },
+        "100": {
+          "adjusted_rand_index": -0.0014275949688334997,
+          "normalized_mutual_info": 0.2958154925286168
+        }
+      }
+    },
+    {
+      "pair": "A→N",
+      "description": "MiniLM(384)→Arctic-m(768)",
+      "pair_type": "cross_cluster",
+      "knn_overlap": {
+        "5": {
+          "mean": 0.0019199999999999998,
+          "std": 0.01950163070104652,
+          "median": 0.0,
+          "p95": 0.0,
+          "p99": 0.0,
+          "max": 0.2,
+          "zero_frac": 0.9904,
+          "random_expected": 0.0020008003201280513
+        },
+        "10": {
+          "mean": 0.0037600000000000003,
+          "std": 0.019022681199031857,
+          "median": 0.0,
+          "p95": 0.0,
+          "p99": 0.1,
+          "max": 0.1,
+          "zero_frac": 0.9624,
+          "random_expected": 0.004001600640256103
+        },
+        "20": {
+          "mean": 0.0085,
+          "std": 0.020512191496766013,
+          "median": 0.0,
+          "p95": 0.05,
+          "p99": 0.1,
+          "max": 0.15,
+          "zero_frac": 0.8428,
+          "random_expected": 0.008003201280512205
+        },
+        "50": {
+          "mean": 0.019656,
+          "std": 0.019342224897875633,
+          "median": 0.02,
+          "p95": 0.06,
+          "p99": 0.08,
+          "max": 0.16,
+          "zero_frac": 0.3588,
+          "random_expected": 0.02000800320128051
+        },
+        "100": {
+          "mean": 0.039668,
+          "std": 0.019532787205107212,
+          "median": 0.04,
+          "p95": 0.07,
+          "p99": 0.09,
+          "max": 0.14,
+          "zero_frac": 0.014,
+          "random_expected": 0.04001600640256102
+        }
+      },
+      "cluster_agreement": {
+        "10": {
+          "adjusted_rand_index": 0.0012068325200403616,
+          "normalized_mutual_info": 0.009777485069308905
+        },
+        "20": {
+          "adjusted_rand_index": 0.0006448470357359979,
+          "normalized_mutual_info": 0.025995865245382697
+        },
+        "50": {
+          "adjusted_rand_index": 0.0007961162116707067,
+          "normalized_mutual_info": 0.14003274290881534
+        },
+        "100": {
+          "adjusted_rand_index": 0.00015982796198439037,
+          "normalized_mutual_info": 0.3008635787337227
+        }
+      }
+    },
+    {
+      "pair": "A→B",
+      "description": "MiniLM(384)→E5-large(1024)",
+      "pair_type": "control_same_cluster",
+      "knn_overlap": {
+        "5": {
+          "mean": 0.41776,
+          "std": 0.2674408016739406,
+          "median": 0.4,
+          "p95": 0.8,
+          "p99": 1.0,
+          "max": 1.0,
+          "zero_frac": 0.13,
+          "random_expected": 0.0020008003201280513
+        },
+        "10": {
+          "mean": 0.42663999999999996,
+          "std": 0.2381812553497861,
+          "median": 0.4,
+          "p95": 0.8,
+          "p99": 0.9,
+          "max": 1.0,
+          "zero_frac": 0.0368,
+          "random_expected": 0.004001600640256103
+        },
+        "20": {
+          "mean": 0.43244,
+          "std": 0.21349390248904065,
+          "median": 0.45,
+          "p95": 0.8,
+          "p99": 0.9,
+          "max": 0.95,
+          "zero_frac": 0.0052,
+          "random_expected": 0.008003201280512205
+        },
+        "50": {
+          "mean": 0.446952,
+          "std": 0.18746943669835892,
+          "median": 0.44,
+          "p95": 0.74,
+          "p99": 0.84,
+          "max": 0.92,
+          "zero_frac": 0.0004,
+          "random_expected": 0.02000800320128051
+        },
+        "100": {
+          "mean": 0.46526399999999996,
+          "std": 0.17255529636612144,
+          "median": 0.46,
+          "p95": 0.7404999999999973,
+          "p99": 0.81,
+          "max": 0.88,
+          "zero_frac": 0.0,
+          "random_expected": 0.04001600640256102
+        }
+      },
+      "cluster_agreement": {
+        "10": {
+          "adjusted_rand_index": 0.28408919701123214,
+          "normalized_mutual_info": 0.45439471479960797
+        },
+        "20": {
+          "adjusted_rand_index": 0.301058033928488,
+          "normalized_mutual_info": 0.5191628152313262
+        },
+        "50": {
+          "adjusted_rand_index": 0.2467793813704828,
+          "normalized_mutual_info": 0.56767659382347
+        },
+        "100": {
+          "adjusted_rand_index": 0.2117146135183601,
+          "normalized_mutual_info": 0.612591353048047
+        }
+      }
+    }
+  ],
+  "elapsed_seconds": 31.646424770355225
+}
