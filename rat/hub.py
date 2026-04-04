@@ -232,6 +232,13 @@ class RATHub:
 
         offset = 0
         for db_emb, db_model in databases:
+            if db_emb.shape[0] < 50:
+                warnings.warn(
+                    f"Database '{db_model}' has only {db_emb.shape[0]} documents. "
+                    "Per-database score normalization may be unstable with fewer than "
+                    "~50 documents.",
+                    stacklevel=2,
+                )
             d_rel = self.transform(db_model, db_emb, role="db")
             d_norm = d_rel / (np.linalg.norm(d_rel, axis=1, keepdims=True) + 1e-10)
             sim = q_norm @ d_norm.T  # (N, M_i)

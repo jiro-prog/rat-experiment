@@ -44,9 +44,28 @@ d_rel = translator.transform(db_emb, "b")                 # db side (z-score app
 d_rel = translator.transform(db_emb, "b", role="query")   # override: skip z-score
 ```
 
-> **Note:** For cross-family model pairs (e.g., MiniLM → BGE), use `normalize="always"`
-> when constructing the translator. The default `"auto"` mode may skip z-score normalization
-> for some models where it would actually help in cross-model scenarios.
+See [`examples/quickstart.py`](examples/quickstart.py) for a complete runnable example.
+
+## Compatibility Check
+
+Before running a full pipeline, check expected accuracy:
+
+```python
+compat = translator.estimate_compatibility(same_family=True)
+print(compat["compatibility"])           # "high" / "moderate" / "low"
+print(compat["estimated_recall_at_1"])   # point estimate (%)
+print(compat["confidence_band"])         # (lower, upper) at 68% coverage
+```
+
+The compatibility tier is based on similarity compression (`max_sim_mean`) and is more
+reliable than the point estimate (R²=0.17). Cross-modal and CLIP-text models may
+deviate significantly from the estimate.
+
+| Tier | max_sim_mean | Typical R@1 |
+|------|-------------|-------------|
+| high | < 0.45 | 91-98% |
+| moderate | 0.45-0.72 | 73-91% |
+| low | >= 0.72 | 61-82% |
 
 ## Advanced: RATHub (multi-model)
 
@@ -91,7 +110,8 @@ results = hub.retrieve_multi(
 ```
 
 `retrieve_multi` uses per-database score normalization internally to make
-scores comparable across databases. Do not vstack relative representations
+scores comparable across databases. Each database should have at least ~50
+documents for stable normalization. Do not vstack relative representations
 from different models — their score scales differ.
 
 ## Paper
