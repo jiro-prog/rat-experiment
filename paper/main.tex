@@ -279,7 +279,7 @@ The resulting 17$\times$17 matrix (Figure~\ref{fig:rdm_heatmap}) reveals a \emph
 \subsubsection{RAT Accuracy Across 272 Directed Pairs}
 \label{sec:272pairs}
 
-Figure~\ref{fig:r1_matrix_17} shows the full 17$\times$17 Recall@1 matrix across all 272 directed pairs (mean 50.6\%, range 0.2\%--99.6\%). RAT achieves non-trivial accuracy on the vast majority of pairs, with failures concentrated in pairs where the query model has high similarity compression (B, F, G, H, I as query: R@1 $<$ 1\% regardless of target). This is the same compression-driven failure mode identified in \S\ref{sec:collapse}, not a structural incompatibility.
+Figure~\ref{fig:r1_matrix_17} shows the full 17$\times$17 Recall@1 matrix across all 272 directed pairs (mean 50.6\%, range 0.2\%--99.6\%). RAT achieves non-trivial accuracy on the vast majority of pairs, with low accuracy concentrated in pairs where the query model has high similarity compression (B, F, G, H, I as query: R@1 $<$ 1\% on most cross-family targets, though within-family pairs remain high, e.g., H$\to$I = 97\%). This is the compression-driven failure mode identified in \S\ref{sec:collapse}, not a structural incompatibility.
 
 \begin{figure}[t]
   \centering
@@ -513,7 +513,7 @@ Table~\ref{tab:d1_main} and Figure~\ref{fig:d1_r1_vs_k} reveal a clear crossover
 \toprule
 Method & $N$ & $K{=}10$ & $K{=}25$ & $K{=}50$ & $K{=}100$ & $K{=}200$ & $K{=}500$ \\
 \midrule
-\multicolumn{8}{@{}l@{}}{\emph{11-model subset (A--K)}} \\
+\multicolumn{8}{@{}l@{}}{\emph{12-model subset (A--L)}} \\
 RAT                 & 132 & \textbf{5.9}  & \textbf{19.0} & \textbf{30.4} & 37.5 & 42.7 & 46.0 \\
 RAT$_\text{auto}$   &  66 & \textbf{7.4}  & \textbf{22.7} & \textbf{38.7} & \textbf{51.2} & 58.5 & 61.8 \\
 Procrustes          &  32 & 2.1  & 7.8  & 23.0 & 51.1 & 70.6 & 79.9 \\
