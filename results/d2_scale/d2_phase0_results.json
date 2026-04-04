@@ -1,0 +1,119 @@
+{
+  "timestamp": "2026-04-04 18:09:44",
+  "pooling_verification": {
+    "O": {
+      "module_name": "1",
+      "class": "Pooling",
+      "cls_token": true,
+      "mean_tokens": false,
+      "max_tokens": false,
+      "lasttoken": false,
+      "has_normalize_layer": true
+    },
+    "P": {
+      "module_name": "1",
+      "class": "Pooling",
+      "cls_token": true,
+      "mean_tokens": false,
+      "max_tokens": false,
+      "lasttoken": false,
+      "has_normalize_layer": true
+    },
+    "N": {
+      "module_name": "1",
+      "class": "Pooling",
+      "cls_token": true,
+      "mean_tokens": false,
+      "max_tokens": false,
+      "lasttoken": false,
+      "has_normalize_layer": true
+    },
+    "Q": {
+      "module_name": "1",
+      "class": "Pooling",
+      "cls_token": true,
+      "mean_tokens": false,
+      "max_tokens": false,
+      "lasttoken": false,
+      "has_normalize_layer": true
+    }
+  },
+  "sts_sanity_check": [
+    {
+      "label": "A",
+      "model": "sentence-transformers/all-MiniLM-L6-v2",
+      "dim": 384,
+      "sts_spearman_rho": 0.8672,
+      "sts_p_value": 0.0,
+      "status": "PASS",
+      "n_pairs": 1500,
+      "encode_time_s": 1.1
+    },
+    {
+      "label": "C",
+      "model": "BAAI/bge-small-en-v1.5",
+      "dim": 384,
+      "sts_spearman_rho": 0.8873,
+      "sts_p_value": 0.0,
+      "status": "PASS",
+      "n_pairs": 1500,
+      "encode_time_s": 0.8
+    },
+    {
+      "label": "J",
+      "model": "sentence-transformers/all-mpnet-base-v2",
+      "dim": 768,
+      "sts_spearman_rho": 0.8811,
+      "sts_p_value": 0.0,
+      "status": "PASS",
+      "n_pairs": 1500,
+      "encode_time_s": 1.7
+    },
+    {
+      "label": "O",
+      "model": "Snowflake/snowflake-arctic-embed-xs",
+      "dim": 384,
+      "sts_spearman_rho": 0.7779,
+      "sts_p_value": 1.4295567681238196e-304,
+      "status": "PASS",
+      "n_pairs": 1500,
+      "encode_time_s": 0.5
+    },
+    {
+      "label": "P",
+      "model": "Snowflake/snowflake-arctic-embed-s",
+      "dim": 384,
+      "sts_spearman_rho": 0.7943,
+      "sts_p_value": 0.0,
+      "status": "PASS",
+      "n_pairs": 1500,
+      "encode_time_s": 0.8
+    },
+    {
+      "label": "N",
+      "model": "Snowflake/snowflake-arctic-embed-m",
+      "dim": 768,
+      "sts_spearman_rho": 0.7488,
+      "sts_p_value": 6.985205690129332e-270,
+      "status": "PASS",
+      "n_pairs": 1500,
+      "encode_time_s": 1.6
+    },
+    {
+      "label": "Q",
+      "model": "Snowflake/snowflake-arctic-embed-l",
+      "dim": 1024,
+      "sts_spearman_rho": 0.7423,
+      "sts_p_value": 9.809128161984746e-263,
+      "status": "PASS",
+      "n_pairs": 1500,
+      "encode_time_s": 4.6
+    }
+  ],
+  "go_nogo": {
+    "arctic_pass_count": 4,
+    "arctic_total": 4,
+    "decision": "GO"
+  },
+  "elapsed_seconds": 201.7
+}

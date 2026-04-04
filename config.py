@@ -111,6 +111,25 @@ MATRIX_MODELS = {
         "training": "contrastive_retromae", "lang": "en",
         "prefix": "",
     },
+    # --- D2: Arctic スケール系列 ---
+    "O": {
+        "name": "Snowflake/snowflake-arctic-embed-xs",
+        "family": "Arctic", "params": "22M", "dim": 384,
+        "training": "contrastive_retromae", "lang": "en",
+        "prefix": "",
+    },
+    "P": {
+        "name": "Snowflake/snowflake-arctic-embed-s",
+        "family": "Arctic", "params": "33M", "dim": 384,
+        "training": "contrastive_retromae", "lang": "en",
+        "prefix": "",
+    },
+    "Q": {
+        "name": "Snowflake/snowflake-arctic-embed-l",
+        "family": "Arctic", "params": "335M", "dim": 1024,
+        "training": "contrastive_retromae", "lang": "en",
+        "prefix": "",
+    },
 }
 
 # モデルごとのプレフィクス設定（既存スクリプト互換）
