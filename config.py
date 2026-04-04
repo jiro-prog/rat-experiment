@@ -98,6 +98,19 @@ MATRIX_MODELS = {
         "prefix": "search_document: ",
         "trust_remote_code": True,
     },
+    # --- 2024-2025世代モデル ---
+    "M": {
+        "name": "Alibaba-NLP/gte-Qwen2-1.5B-instruct",
+        "family": "GTE-Qwen2", "params": "1.5B", "dim": 1536,
+        "training": "llm_instruct", "lang": "multi",
+        "prefix": "",
+    },
+    "N": {
+        "name": "Snowflake/snowflake-arctic-embed-m",
+        "family": "Arctic", "params": "109M", "dim": 768,
+        "training": "contrastive_retromae", "lang": "en",
+        "prefix": "",
+    },
 }
 
 # モデルごとのプレフィクス設定（既存スクリプト互換）

@@ -3,17 +3,27 @@ __pycache__/
 *.py[cod]
 .venv/
 *.egg-info/
+dist/
 
-# Data (generated at runtime)
-data/*.npy
-data/*.json
+# Data (large embeddings, generated at runtime)
+data/
 
-# Paper (arXiv only, not on GitHub)
-paper/main.tex
+# Results (large JSON/CSV, regenerable from experiments/)
+results/d1_alignment/
+results/mn_validation/
+results/*.json
+results/*.png
+
+# Paper build artifacts
 paper/main.pdf
 paper/main.aux
 paper/main.log
 paper/main.out
+paper/main.bbl
+paper/main.blg
+paper/Styles/
+paper/__MACOSX/
+paper/neurips_style.zip
 
 # OS
 .DS_Store
