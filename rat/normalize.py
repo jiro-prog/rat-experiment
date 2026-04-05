@@ -46,17 +46,21 @@ def normalize_zscore(relative_repr: np.ndarray) -> np.ndarray:
 
 def recommend_zscore(
     sim_mean: float,
-    threshold: float = 0.15,
     harmful_threshold: float = 0.65,
 ) -> str:
-    """Recommend z-score normalization based on sim_mean.
+    """Recommend z-score normalization based on DB-side sim_mean.
+
+    Z-score is applied to DB-side relative representations when the DB
+    model's sim_mean (mean pairwise cosine similarity among anchors) is
+    below the harmful threshold.  This threshold is robust: values between
+    0.60 and 0.65 achieve within 0.7 pp of per-pair oracle selection.
 
     Parameters
     ----------
-    sim_mean : mean pairwise cosine similarity of anchors
-    threshold : kept for backward compatibility but no longer used
-        in the decision. Previously, sim_mean below this was "not_needed".
-    harmful_threshold : above this, z-score is harmful
+    sim_mean : float
+        Mean pairwise cosine similarity of the DB model's anchors.
+    harmful_threshold : float
+        Above this, z-score is harmful and should be skipped.
 
     Returns
     -------

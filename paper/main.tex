@@ -86,9 +86,9 @@ When anchor inter-similarity is compressed into a narrow range (e.g., E5-large: 
 \begin{equation}
   \hat{r}_Y(y_j) = \frac{r_Y(y_j) - \mu_j}{\sigma_j}, \quad \mu_j = \frac{1}{K}\sum_k [r_Y(y_j)]_k, \quad \sigma_j = \mathrm{std}(r_Y(y_j))
 \end{equation}
-The query representation $r_X(x)$ is left unnormalized. DB-side z-score exactly matches both-side normalization across all pairs, while query-side normalization is consistently harmful (\S\ref{sec:asymmetric}).
+The query representation $r_X(x)$ is left unnormalized. DB-side z-score closely matches both-side normalization across all 132 pairs ($\Delta < 0.1$~pp), while query-side normalization is consistently harmful on well-spread models (\S\ref{sec:asymmetric}).
 
-\textbf{Adaptive application.} Z-score is conditionally beneficial: it helps when the DB model has low similarity compression but \emph{destroys} accuracy on compressed models (\S\ref{sec:asymmetric}). We apply z-score adaptively based on the DB model's sim\_mean (mean pairwise cosine similarity among anchors): apply when sim\_mean $< 0.65$, skip otherwise. This threshold is diagnosable from anchor embeddings alone, requiring no retrieval evaluation.
+\textbf{Adaptive application.} Z-score is conditionally beneficial: it helps when the DB model has low similarity compression but \emph{destroys} accuracy on compressed models (\S\ref{sec:asymmetric}). We apply z-score adaptively based on the DB model's sim\_mean (mean pairwise cosine similarity among anchors): apply when sim\_mean $< 0.65$, skip otherwise. This threshold is robust: across 132 pairs at $K{=}500$, thresholds between 0.60 and 0.65 achieve within 0.7~pp of per-pair oracle selection (Table~\ref{tab:zscore_threshold}). DB-side sim\_mean is the effective criterion; query-side (FPS-space) sim\_mean provides no discrimination (\S\ref{sec:asymmetric}). This threshold is diagnosable from anchor embeddings alone, requiring no retrieval evaluation.
 
 Algorithm~1 summarizes the complete protocol.
 
@@ -371,9 +371,39 @@ The 5-model experiments established that DB-side z-score is beneficial (\S\ref{s
 
 When the DB model has low sim\_mean (MiniLM, MPNet; $\approx$0.03), its relative profiles contain rich discriminative information in a wide range. Z-score rescales this well-spread information, making it accessible to compressed query profiles---hence dramatic improvements (e.g., F$\to$A: 1.0\%$\to$89.0\%, $\Delta$=+88pp). When the DB model has high sim\_mean (GTE, E5; $>$0.69), its profiles are themselves compressed with little discriminative information. Z-score amplifies noise alongside the weak signal, causing collapse (e.g., H$\to$I: 98.4\%$\to$36.8\%, $\Delta$=$-$62pp).
 
-The Spearman correlation between z-score effect and DB sim\_mean is $\rho = -0.59$ ($p < 10^{-11}$). Partitioning at sim\_mean = 0.15: pairs with low-compression DB models gain $+$18 points on average from z-score; pairs with high-compression DB models lose $-$6 points. The practical implication is that z-score should be applied \emph{adaptively}: only when the DB model's sim\_mean is below a threshold, diagnosable from anchor embeddings alone.
+The Spearman correlation between z-score effect and DB sim\_mean is $\rho = -0.59$ ($p < 10^{-11}$). The practical implication is that z-score should be applied \emph{adaptively}: only when the DB model's sim\_mean is below a threshold, diagnosable from anchor embeddings alone.
 
-\textbf{DB-side sufficiency.} Across all pairs, DB-only z-score exactly matches both-side z-score, while query-side normalization is consistently harmful ($-$8 to $-$10 points on well-spread models). This is because DB-side normalization leverages stable statistics from $n$ database vectors, while a single query vector's row-wise z-score distorts the relative magnitudes that carry discriminative signal.
+\textbf{Threshold robustness.} Table~\ref{tab:zscore_threshold} quantifies the sensitivity of the harmful threshold choice.  Using DB-side sim\_mean as the criterion, thresholds between 0.60 and 0.65 achieve 57.4\% mean Recall@1---within 0.7~pp of the per-pair oracle (58.1\%)---demonstrating that a single threshold captures nearly all adaptive benefit.  By contrast, using query-side (FPS-space) sim\_mean provides no discrimination: its best result (53.5\% at $t{=}0.75$) equals the ``always z-score'' baseline, confirming that the DB model's compression level, not the query model's, determines z-score utility.
+
+\begin{table}[t]
+\centering
+\caption{Z-score threshold sensitivity (models A--L, 132 directed pairs, $K{=}500$). Adaptive strategy applies z-score when the reference sim\_mean is below the threshold. DB-side sim\_mean is the effective criterion; query-side provides no discrimination.}
+\label{tab:zscore_threshold}
+\small
+\begin{tabular}{@{}llcc@{}}
+\toprule
+Strategy & Threshold & Mean R@1 (\%) & Oracle gap (pp) \\
+\midrule
+Always baseline & --- & 41.4 & $-$16.6 \\
+Always z-score  & --- & 53.5 & $-$4.6 \\
+\midrule
+\multicolumn{4}{@{}l@{}}{\emph{Adaptive (DB-side sim\_mean)}} \\
+                & 0.55 & 56.0 & $-$2.1 \\
+                & 0.60 & \textbf{57.4} & $-$0.7 \\
+                & 0.65 & \textbf{57.4} & $-$0.7 \\
+                & 0.70 & 55.1 & $-$3.0 \\
+\midrule
+\multicolumn{4}{@{}l@{}}{\emph{Adaptive (query-side sim\_mean)}} \\
+                & 0.65 & 44.5 & $-$13.6 \\
+                & 0.70 & 46.9 & $-$11.1 \\
+                & 0.75 & 53.5 & $-$4.6 \\
+\midrule
+Oracle (per-pair) & --- & 58.1 & 0.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{DB-side sufficiency.} Across all 132 pairs, DB-only z-score closely matches both-side z-score ($\Delta < 0.1$~pp), while query-side normalization is consistently harmful ($-$8 to $-$10 points on well-spread models). This is because DB-side normalization leverages stable statistics from $n$ database vectors, while a single query vector's row-wise z-score distorts the relative magnitudes that carry discriminative signal. Note that the \S\ref{sec:alignment} experiments used query-side (FPS-space) sim\_mean for the z-score decision; the threshold sensitivity analysis (Table~\ref{tab:zscore_threshold}) confirms that DB-side sim\_mean is the more effective criterion.
 
 \subsection{Cross-Modal Analysis}
 \label{sec:crossmodal_analysis}
@@ -506,7 +536,7 @@ Table~\ref{tab:d1_main} and Figure~\ref{fig:d1_r1_vs_k} reveal a clear crossover
 
 \begin{table}[t]
 \centering
-\caption{Mean Recall@1 (\%) across model pairs by anchor count $K$. Top block: 12-model subset A--L (132 directed pairs). Bottom block: all 17 models (272 directed pairs). Procrustes: same-dimension only. Ridge/Affine $\lambda$ selected per pair by test-set R@1 (oracle upper bound).}
+\caption{Mean Recall@1 (\%) across model pairs by anchor count $K$, averaged over 3 FPS seeds. Top block: 12-model subset A--L (132 directed pairs). Bottom block: all 17 models (272 directed pairs). RAT$_\text{auto}$: oracle direction selection; RAT$_\text{auto}$ (sim\_mean): non-oracle direction via lower sim\_mean heuristic. Procrustes: same-dimension only. Ridge/Affine $\lambda$ selected per pair by test-set R@1 (oracle upper bound).}
 \label{tab:d1_main}
 \small
 \begin{tabular}{@{}lrcccccc@{}}
@@ -514,17 +544,19 @@ Table~\ref{tab:d1_main} and Figure~\ref{fig:d1_r1_vs_k} reveal a clear crossover
 Method & $N$ & $K{=}10$ & $K{=}25$ & $K{=}50$ & $K{=}100$ & $K{=}200$ & $K{=}500$ \\
 \midrule
 \multicolumn{8}{@{}l@{}}{\emph{12-model subset (A--L)}} \\
-RAT                 & 132 & \textbf{5.9}  & \textbf{19.0} & \textbf{30.4} & 37.5 & 42.7 & 46.0 \\
-RAT$_\text{auto}$   &  66 & \textbf{7.4}  & \textbf{22.7} & \textbf{38.7} & \textbf{51.2} & 58.5 & 61.8 \\
-Procrustes          &  32 & 2.1  & 7.8  & 23.0 & 51.1 & 70.6 & 79.9 \\
-Ridge               & 132 & 2.2  & 8.5  & 23.2 & 45.6 & 62.4 & 72.9 \\
-Affine              & 132 & 1.8  & 7.5  & 22.2 & 45.8 & 63.2 & 73.1 \\
+RAT                 & 132 & \textbf{6.0}  & \textbf{19.0} & \textbf{30.1} & 37.3 & 42.7 & 45.9 \\
+RAT$_\text{auto}$   &  66 & \textbf{7.4}  & \textbf{22.8} & \textbf{38.4} & \textbf{51.0} & 58.2 & 61.7 \\
+Procrustes          &  32 & 2.0  & 7.8  & 23.2 & 51.2 & 70.6 & 79.6 \\
+Ridge               & 132 & 2.2  & 8.6  & 23.4 & 45.9 & 62.9 & 73.1 \\
+Affine              & 132 & 1.9  & 7.6  & 22.4 & 46.2 & 63.5 & 73.3 \\
 \midrule
 \multicolumn{8}{@{}l@{}}{\emph{All 17 models}} \\
-RAT                 & 272 & \textbf{4.6}  & \textbf{15.4} & \textbf{27.4} & 37.8 & 46.3 & 50.6 \\
-Procrustes          &  66 & 1.8  & 6.8  & 20.8 & 49.3 & 74.8 & 89.0 \\
-Ridge               & 272 & 1.9  & 6.8  & 19.8 & 44.2 & 67.7 & 85.0 \\
-Affine              & 272 & 1.7  & 6.3  & 19.5 & 44.6 & 68.4 & 85.2 \\
+RAT                 & 272 & 4.7  & 15.5 & 27.7 & 37.8 & 46.1 & 50.3 \\
+RAT$_\text{auto}$   & 136 & \textbf{6.0}  & \textbf{19.5} & \textbf{34.8} & \textbf{49.0} & 59.2 & 64.2 \\
+RAT$_\text{auto}$ (sim\_mean) & 136 & 4.8 & 16.9 & 32.3 & 47.0 & 56.8 & 60.9 \\
+Procrustes          &  66 & 1.8  & 6.8  & 20.8 & 49.0 & 74.7 & 89.1 \\
+Ridge               & 272 & 1.9  & 6.9  & 19.7 & 44.1 & 68.0 & 85.0 \\
+Affine              & 272 & 1.7  & 6.4  & 19.4 & 44.7 & 68.7 & 85.2 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -560,7 +592,7 @@ RAT exhibits pronounced directional asymmetry: the same model pair can yield vas
 
 Figure~\ref{fig:d1_scatter} reveals the cause: when FPS runs in a compressed space (sim\_mean $\ge 0.65$), anchor selection degenerates---points are tightly clustered, FPS cannot achieve coverage, and relative profiles become uninformative.  The Spearman correlation between $|\Delta\text{sim\_mean}|$ and asymmetry is $\rho = 0.47$ ($p < 10^{-4}$).
 
-This motivates \textbf{bidirectional evaluation}: run FPS in both model spaces, compute RAT retrieval in both directions, and select the direction with higher accuracy.  Since FPS and RAT encoding run in milliseconds, the computational overhead is negligible.  We denote this oracle selection \textbf{RAT$_\text{auto}$} in Table~\ref{tab:d1_main}.\footnote{RAT$_\text{auto}$ uses oracle direction selection (best of two directions on the test set).  In deployment without a test set, selecting the lower sim\_mean space as the FPS space correctly predicts the better direction 74\% of the time.  A practical deployment would compute RAT retrieval in both directions and select the one with higher mean similarity score, which closely approximates oracle selection.}  RAT$_\text{auto}$ improves mean Recall@1 from 46.0\% to 61.8\% at $K{=}500$ (+15.8 pp), narrowing the gap with linear methods from 27.1 pp to 11.3 pp.
+This motivates \textbf{bidirectional evaluation}: run FPS in both model spaces, compute RAT retrieval in both directions, and select the direction with higher accuracy.  Since FPS and RAT encoding run in milliseconds, the computational overhead is negligible.  We denote this oracle selection \textbf{RAT$_\text{auto}$} in Table~\ref{tab:d1_main}.\footnote{RAT$_\text{auto}$ uses oracle direction selection (best of two directions on the test set).  In deployment without a test set, selecting the lower sim\_mean space as the FPS space correctly predicts the better direction 76\% of the time (136 undirected pairs across all 17 models at $K{=}500$).  This sim\_mean heuristic achieves nearly 95\% of oracle performance (60.9\% vs.\ 64.2\% mean Recall@1).  A practical deployment would compute RAT retrieval in both directions and select the one with higher mean similarity score, which closely approximates oracle selection.}  RAT$_\text{auto}$ improves mean Recall@1 from 45.9\% to 61.7\% at $K{=}500$ (+15.8 pp), narrowing the gap with linear methods from 27.2 pp to 11.4 pp.
 
 \subsection{Same-Dimension vs.\ Cross-Dimension Pairs}
 

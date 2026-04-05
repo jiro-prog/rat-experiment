@@ -23,7 +23,6 @@ class RATHub:
         kernel: str = "poly",
         kernel_params: dict | None = None,
         normalize: str = "auto",
-        normalize_threshold: float = 0.15,
         normalize_harmful_threshold: float = 0.65,
         verbose: bool = False,
     ):
@@ -31,7 +30,6 @@ class RATHub:
         self._kernel_params = kernel_params or {}
         self._kernel_fn = get_kernel(kernel, kernel_params)
         self._normalize = normalize
-        self._normalize_threshold = normalize_threshold
         self._normalize_harmful_threshold = normalize_harmful_threshold
         self._verbose = verbose
 
@@ -77,7 +75,7 @@ class RATHub:
         }
 
         if self._verbose:
-            rec = recommend_zscore(sim_mean, self._normalize_threshold, self._normalize_harmful_threshold)
+            rec = recommend_zscore(sim_mean, self._normalize_harmful_threshold)
             print(f"[RAT] {model_name} sim_mean={sim_mean:.3f} → z-score: {rec}")
             print(
                 f"[RAT] Anchor shape: {model_name}="
@@ -138,7 +136,7 @@ class RATHub:
             return True
 
         # "auto": apply z-score unless harmful
-        rec = recommend_zscore(sim_mean, self._normalize_threshold, self._normalize_harmful_threshold)
+        rec = recommend_zscore(sim_mean, self._normalize_harmful_threshold)
         should = rec != "harmful"
 
         if self._verbose:
@@ -331,7 +329,7 @@ class RATHub:
         sm_a = self._models[model_a]["sim_mean"]
         sm_b = self._models[model_b]["sim_mean"]
         max_sm = max(sm_a, sm_b)
-        rec = recommend_zscore(max_sm, self._normalize_threshold, self._normalize_harmful_threshold)
+        rec = recommend_zscore(max_sm, self._normalize_harmful_threshold)
 
         # Point estimate (clipped to [0, 100])
         est = self._COMPAT_SLOPE * max_sm + self._COMPAT_INTERCEPT
@@ -405,7 +403,6 @@ class RATHub:
             "kernel": self._kernel_name,
             "kernel_params": self._kernel_params,
             "normalize": self._normalize,
-            "normalize_threshold": self._normalize_threshold,
             "normalize_harmful_threshold": self._normalize_harmful_threshold,
             "model_names": model_names,
             "sim_means": {n: self._models[n]["sim_mean"] for n in model_names},
@@ -427,7 +424,6 @@ class RATHub:
             kernel=config["kernel"],
             kernel_params=config.get("kernel_params"),
             normalize=config["normalize"],
-            normalize_threshold=config["normalize_threshold"],
             normalize_harmful_threshold=config.get("normalize_harmful_threshold", 0.65),
         )
 

@@ -29,7 +29,6 @@ class RATranslator:
         kernel: str = "poly",
         kernel_params: dict | None = None,
         normalize: str = "auto",
-        normalize_threshold: float = 0.15,
         normalize_harmful_threshold: float = 0.65,
         verbose: bool = False,
     ):
@@ -37,7 +36,6 @@ class RATranslator:
             kernel=kernel,
             kernel_params=kernel_params,
             normalize=normalize,
-            normalize_threshold=normalize_threshold,
             normalize_harmful_threshold=normalize_harmful_threshold,
             verbose=verbose,
         )
